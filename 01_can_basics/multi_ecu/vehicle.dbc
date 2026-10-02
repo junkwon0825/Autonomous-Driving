@@ -1,0 +1,30 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: PowertrainECU BatteryECU SteeringECU BodyECU VehicleDataService AgentECU
+
+
+BO_ 256 PowertrainStatus: 8 PowertrainECU
+ SG_ VehicleSpeed : 0|16@1+ (0.01,0) [0|250] "km/h" VehicleDataService
+ SG_ EngineRPM : 16|16@1+ (0.25,0) [0|16000] "rpm" VehicleDataService
+ SG_ GearPosition : 32|4@1+ (1,0) [0|15] "" VehicleDataService
+
+
+BO_ 512 BatteryStatus: 8 BatteryECU
+ SG_ BatterySOC : 0|8@1+ (1,0) [0|100] "%" VehicleDataService
+ SG_ BatteryVoltage : 8|16@1+ (0.1,0) [0|1000] "V" VehicleDataService
+ SG_ BatteryTemperature : 24|8@1+ (1,-40) [-40|215] "degC" VehicleDataService
+
+
+BO_ 768 SteeringStatus: 8 SteeringECU
+ SG_ SteeringAngle : 0|16@1- (0.1,0) [-780|780] "deg" VehicleDataService
+ SG_ YawRate : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s" VehicleDataService
+
+
+BO_ 1024 BodyStatus: 8 BodyECU
+ SG_ CabinTemperature : 0|8@1+ (0.5,-40) [-40|87.5] "degC" VehicleDataService
+ SG_ HvacTarget : 8|8@1+ (0.5,0) [0|127.5] "degC" VehicleDataService
+ SG_ DoorLocked : 16|1@1+ (1,0) [0|1] "" VehicleDataService
