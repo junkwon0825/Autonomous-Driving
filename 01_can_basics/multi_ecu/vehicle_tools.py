@@ -1,8 +1,15 @@
 class VehicleTools:
 
-    def __init__(self, vehicle_service):
+    def __init__(
+        self,
+        vehicle_service,
+        command_service=None,
+        safety_layer=None
+):
 
         self.service = vehicle_service
+        self.command_service = command_service
+        self.safety_layer = safety_layer
 
 
     # =====================================
@@ -145,3 +152,43 @@ class VehicleTools:
             "success": True,
             "vehicle_state": state
         }
+
+    def set_hvac_temperature(
+        self,
+        temperature
+    ):
+
+        if (
+            self.command_service is None
+            or self.safety_layer is None
+        ):
+
+            return {
+                "success": False,
+                "error": "Control system is unavailable."
+            }
+
+
+        safety_result = (
+            self.safety_layer
+            .validate_hvac_temperature(
+                temperature
+            )
+        )
+
+
+        if not safety_result["safe"]:
+
+            return {
+                "success": False,
+                "error":
+                    safety_result["error"]
+            }
+
+
+        return (
+            self.command_service
+            .set_hvac_temperature(
+                temperature
+            )
+        )
