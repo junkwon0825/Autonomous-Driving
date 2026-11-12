@@ -44,6 +44,12 @@ Bicycle Model을 직접 구현하며 차량의 위치·heading 변화와 steerin
 
 코드: [01_vehicle_model](01_vehicle_model)
 
+### 3. LKA Control Project
+
+MATLAB/Simulink·Stateflow 기반 LKA 제어 프로젝트에서 Bicycle Model과 Lateral/Yaw PID Controller를 구성하고 주행 시나리오를 검증했습니다.
+
+프로젝트 근거: [LKAS_PROJECT.md](LKAS_PROJECT.md)
+
 ## Learning Roadmap
 
 다음 순서로 실제 코드가 완성될 때마다 저장소에 추가합니다.
