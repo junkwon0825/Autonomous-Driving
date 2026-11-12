@@ -1,320 +1,158 @@
-# Autonomous-Driving
+# Autonomous Driving Study & CARLA Integration
 
-자동차 소프트웨어, CAN 통신, 차량 제어, AI Agent를 하나의 프로젝트로 연결하기 위한 개인 학습 및 구현 프로젝트입니다.
+자율주행 소프트웨어를 **통신 → 차량 모델 → 제어 → 인지 → 시뮬레이션 통합** 순서로 학습하고 직접 구현하기 위한 개인 저장소입니다.
 
-현재는 **Virtual ECU → CAN/DBC → Vehicle Data Service → Vehicle Tool → LLM Agent** 구조를 구현하고 있으며,
-이후 ROS2, 차량 모델, 제어 알고리즘, RAG, RC카 하드웨어까지 확장할 예정입니다.
+최종 목표는 개별 알고리즘을 따로 실행하는 데서 끝내지 않고, **CARLA에서 Perception–Decision–Control이 연결되는 개인 자율주행 프로젝트**로 통합하는 것입니다.
 
-## 1. Project Goal
+> 학습 중인 내용과 실제 구현이 끝난 내용은 구분해서 관리합니다. 빈 placeholder 폴더는 만들지 않고, 코드가 생긴 단계만 저장소에 추가합니다.
 
-최종 목표는 **Automotive AI Agent + Vehicle Digital Twin / RC Car** 구조입니다.
+## Current Implementation
 
-```text
-User
- │
- ▼
-LLM Automotive Agent
- │
- ├── Vehicle Tool
- ├── RAG Tool
- ├── Diagnostic Tool
- └── Navigation Tool
- │
- ▼
-Vehicle Data Service
- │
- ├── CAN / DBC
- ├── ROS2
- └── Vehicle State
- │
- ▼
-Vehicle Controller
- │
- ├── PID
- ├── Pure Pursuit
- ├── Stanley
- └── Safety Layer
- │
- ▼
-Virtual ECU / Raspberry Pi / STM32 / RC Car
-```
+### 1. CAN / Vehicle Agent
 
-LLM은 차량을 직접 제어하지 않고 고수준 Tool만 호출하도록 설계합니다.
-
-## 2. Development Environment
-
-- Windows + WSL2 Ubuntu 24.04
-- Python virtual environment (`.venv`)
-- VS Code
-- Python
-- python-can
-- cantools
-- SocketCAN / vcan
-- OpenAI-compatible LLM API
-- Git / GitHub
-
-향후 추가 예정:
-- ROS2 Jazzy
-- Qdrant
-- PostgreSQL
-- Docker
-- Raspberry Pi 5
-- STM32
-- Camera / IMU / Wheel Encoder
-
-## 3. Current Progress
-
-### DAY1 - CAN Frame
-- CAN ID, DLC, DATA
-- Hex / Byte / Bit
-- Python으로 CAN Message 표현
-
-### DAY2 - CAN Signal Decode
-- Start Bit / Length
-- Signed / Unsigned
-- Factor / Offset
-- Little Endian / Big Endian
-- `Physical Value = Raw Value × Factor + Offset`
-
-### DAY3 - DBC + cantools
-```text
-Physical Signal → DBC Encode → CAN Raw Bytes
-CAN Raw Bytes → DBC Decode → Physical Signal
-```
-
-### DAY4 - Virtual CAN
-- `vcan0`
-- SocketCAN
-- `candump`
-- `cansend`
-- `python-can`
-
-### DAY5 - Multi ECU Simulation
-```text
-Powertrain ECU ──────┐
-Battery ECU ─────────┤
-Steering ECU ────────┼──── vcan0
-Body ECU ────────────┘
-```
+현재 가장 먼저 구현한 영역입니다.
 
 ```text
-0x100 → PowertrainStatus
-0x200 → BatteryStatus
-0x300 → SteeringStatus
-0x400 → BodyStatus
-```
-
-### DAY6 - Vehicle Data Service
-```text
-CAN
- ↓
-DBC Decode
- ↓
-Vehicle Data Service
- ↓
-get_vehicle_speed()
-get_battery_soc()
-get_steering_angle()
-get_vehicle_state()
-```
-
-추가 구현:
-- Background Thread CAN Receiver
-- `threading.Lock`
-- Vehicle State Cache
-- Signal Timestamp
-- Stale Signal 검사
-
-### DAY7 - Vehicle Tool Layer
-```text
-Vehicle Data Service
-        ↓
-Vehicle Tools
-        ↓
-Tool Router
-        ↓
-Agent
-```
-
-### DAY8 - LLM Tool Calling
-```text
-User
- ↓
-LLM
- ↓
-Tool Selection
- ↓
-Tool Router
- ↓
-Vehicle Tool
- ↓
-Vehicle Data Service
- ↓
+Virtual ECU
+   ↓
 CAN / DBC
- ↓
-ECU
+   ↓
+Vehicle Data Service
+   ↓
+Vehicle Tools
+   ↓
+LLM Agent
 ```
 
-### DAY9 - Vehicle Control + Safety Layer
+구현 내용:
 
-첫 제어 기능:
+- CAN Frame / Signal Decode
+- DBC + cantools
+- SocketCAN / vcan
+- Multi ECU Simulation
+- Vehicle State Cache
+- Vehicle Tool / Tool Router
+- LLM Tool Calling
+- Safety Layer
+- Vehicle Command Service
+
+코드: [01_can_basics](01_can_basics)
+
+### 2. Vehicle Model
+
+Bicycle Model을 직접 구현하며 차량의 위치·heading 변화와 steering 입력의 관계를 학습하고 있습니다.
+
+코드: [01_vehicle_model](01_vehicle_model)
+
+## Learning Roadmap
+
+다음 순서로 실제 코드가 완성될 때마다 저장소에 추가합니다.
+
 ```text
-set_hvac_temperature(temperature)
+CAN / DBC
+    ↓
+Vehicle Model
+    ↓
+PID / Lateral Control
+    ↓
+Pure Pursuit / Stanley
+    ↓
+Path Planning
+    ↓
+State Estimation
+    ↓
+Lane / Object Perception
+    ↓
+CARLA Integration
 ```
 
-구조:
+### Control
+- PID lateral control
+- Pure Pursuit
+- Stanley Controller
+- 기존 MATLAB/Simulink LKA 경험과 Python 구현 비교
+
+### Planning / Estimation
+- A*
+- Kalman Filter / EKF
+- waypoint 및 trajectory 처리
+
+### Perception
+- Lane Detection / Lane Segmentation
+- Object Detection
+- Camera 기반 차량 주변 환경 인식
+
+## Final Personal Project — CARLA
+
+학습 단계의 최종 결과물은 CARLA 기반 통합 자율주행 프로젝트로 구성할 계획입니다.
+
 ```text
-User
- ↓
-LLM
- ↓
-set_hvac_temperature(24)
- ↓
-Vehicle Tool
- ↓
-Safety Layer
- ↓
-Vehicle Command Service
- ↓
-DBC Encode
- ↓
-CAN 0x410
- ↓
-Body ECU
+CARLA Camera / Vehicle State
+          ↓
+      Perception
+          ↓
+Planning / Decision
+          ↓
+      Controller
+          ↓
+Throttle / Brake / Steering
+          ↓
+      CARLA Vehicle
 ```
 
-Safety Layer:
-```text
-16°C ~ 30°C → 허용
-그 외 값      → 거부
-```
+목표 기능:
 
-설계 원칙:
-> LLM이 직접 CAN Frame 또는 저수준 Actuator 값을 생성하지 않는다.
+- CARLA 차량 및 센서 연결
+- 카메라 기반 차선/객체 인지
+- waypoint 기반 경로 추종
+- lateral / longitudinal control
+- 주행 로그 및 성능 지표 기록
+- 실패 시나리오 분석
 
-## 4. Current Folder Structure
+CARLA 통합 코드가 실제로 구현되면 별도 디렉터리로 추가하고, 이 README에서 결과 영상·성능·아키텍처를 연결합니다.
+
+## Relation to Other Projects
+
+이 저장소는 **개인 자율주행 학습 및 CARLA 통합 프로젝트** 전용입니다.
+
+Furiosa NPU를 활용하는 최종 팀 프로젝트는 팀 프로젝트가 본격적으로 시작된 뒤 **별도 GitHub Repository**로 분리해 관리합니다. 개인 학습 코드와 팀 결과물을 섞지 않습니다.
+
+## Repository Structure
 
 ```text
 Autonomous-Driving/
-│
 ├── 01_can_basics/
+│   ├── README.md
 │   ├── can_basic.py
 │   ├── can_sender.py
 │   ├── can_receiver.py
-│   ├── dbc_decode.py
 │   ├── signal_decode.py
+│   ├── dbc_decode.py
 │   ├── vehicle.dbc
-│   │
 │   └── multi_ecu/
-│       ├── battery_ecu.py
-│       ├── body_ecu.py
-│       ├── common.py
 │       ├── powertrain_ecu.py
+│       ├── battery_ecu.py
 │       ├── steering_ecu.py
-│       ├── vehicle.dbc
-│       ├── vehicle_monitor.py
+│       ├── body_ecu.py
 │       ├── vehicle_data_service.py
 │       ├── vehicle_tools.py
 │       ├── tool_router.py
-│       ├── manual_agent.py
 │       ├── llm_agent.py
 │       ├── safety_layer.py
 │       └── vehicle_command_service.py
-│
-├── 02_vehicle_model/
-├── 03_pid_tracking/
-├── 04_pure_pursuit/
-├── 05_stanley/
-├── 06_astar_planning/
-├── 07_kalman_filter/
-├── 08_lane_detection/
-├── 09_ros2_basics/
-├── data/
-├── rag/
-├── infra/
-└── .venv/
+├── 01_vehicle_model/
+│   └── bicycle_model.py
+└── README.md
 ```
 
-## 5. Current Read / Write Architecture
+## Environment
 
-### Read Path
-```text
-ECU → CAN → DBC Decode → Vehicle Data Service → Vehicle Tool → LLM Agent
-```
+- Python
+- Windows / WSL2 Ubuntu
+- python-can
+- cantools
+- SocketCAN / vcan
+- NumPy
+- Git / GitHub
 
-### Write Path
-```text
-LLM Agent → Control Tool → Safety Layer → Vehicle Command Service
-→ DBC Encode → CAN → ECU
-```
-
-## 6. Next Plan
-
-앞으로는 **2 DAY 단위**로 진행합니다.
-
-### DAY10
-**Command ACK / 상태 검증 / Timeout**
-
-```text
-Command Sent
-    ↓
-ECU Apply
-    ↓
-Status Message
-    ↓
-State Verification
-    ↓
-Success / Failure
-```
-
-### DAY11
-**Door Lock Control + Generic Command Architecture**
-
-- Door Lock / Unlock Tool
-- Command 공통 처리 구조
-- Safety Validation 확장
-- Vehicle Command Result 표준화
-
-## 7. Long-Term Roadmap
-
-```text
-CAN / DBC
-   ↓
-Vehicle Data Service
-   ↓
-Vehicle Agent
-   ↓
-Vehicle Model
-   ↓
-PID
-   ↓
-Pure Pursuit
-   ↓
-Stanley
-   ↓
-A*
-   ↓
-Kalman / EKF
-   ↓
-Lane Detection
-   ↓
-ROS2
-   ↓
-Vehicle Digital Twin
-   ↓
-RAG / Diagnostics
-   ↓
-Raspberry Pi + STM32 + RC Car
-```
-
-## 8. Git
-
-기능 단위로 Commit합니다.
-
-```bash
-git add .
-git commit -m "feat: add LLM vehicle agent and safe HVAC CAN control"
-git push
-```
-
-`.env`, API Key, 가상환경 등은 GitHub에 업로드하지 않습니다.
+추후 CARLA 통합 단계에서 CARLA Python API, OpenCV, PyTorch 등을 추가합니다.
