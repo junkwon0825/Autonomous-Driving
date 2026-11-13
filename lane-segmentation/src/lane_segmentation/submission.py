@@ -35,16 +35,19 @@ def encode_rle(mask, order, index_base):
 def _read_template(template_path):
     with Path(template_path).open("r", newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
-        if reader.fieldnames != ["filename", "rle_mask"]:
-            raise ValueError(
-                f"Expected sample submission columns ['filename', 'rle_mask'], got {reader.fieldnames}"
-            )
+        fieldnames = reader.fieldnames
+        if fieldnames == ["image_id", "encoded_pixels"]:
+            filename_column, mask_column = "image_id", "encoded_pixels"
+        elif fieldnames == ["filename", "rle_mask"]:
+            filename_column, mask_column = "filename", "rle_mask"
+        else:
+            raise ValueError(f"Unsupported sample submission columns: {fieldnames}")
         rows = list(reader)
-    if not rows or any(not row["filename"] for row in rows):
+    if not rows or any(not row[filename_column] for row in rows):
         raise ValueError("Sample submission must contain at least one row with a filename")
-    if len({row["filename"] for row in rows}) != len(rows):
+    if len({row[filename_column] for row in rows}) != len(rows):
         raise ValueError("Sample submission contains duplicate filenames")
-    return rows
+    return fieldnames, filename_column, mask_column, rows
 
 
 def generate_submission(
@@ -58,13 +61,13 @@ def generate_submission(
     rle_order,
     index_base,
 ):
-    rows = _read_template(sample_submission)
+    fieldnames, filename_column, mask_column, rows = _read_template(sample_submission)
     test_root = Path(test_root).resolve()
     predictions = []
     for row in rows:
-        image_path = (test_root / row["filename"]).resolve()
+        image_path = (test_root / row[filename_column]).resolve()
         if not image_path.is_relative_to(test_root):
-            raise ValueError(f"Test filename escapes the test image directory: {row['filename']}")
+            raise ValueError(f"Test filename escapes the test image directory: {row[filename_column]}")
         if not image_path.is_file():
             raise FileNotFoundError(f"Test image listed in sample submission was not found: {image_path}")
         mask = predict_image(
@@ -74,13 +77,13 @@ def generate_submission(
             threshold=threshold,
             device=device,
         )
-        row["rle_mask"] = encode_rle(mask, rle_order, index_base)
+        row[mask_column] = encode_rle(mask, rle_order, index_base)
         predictions.append(row)
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=("filename", "rle_mask"), lineterminator="\n")
+        writer = csv.DictWriter(file, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(predictions)
     return output_path

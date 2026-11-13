@@ -14,7 +14,7 @@ Kaggle 페이지에서 확인한 내용:
 
 - 일정: 2025-05-15 시작, 2025-06-22 종료. 현재 페이지에 `Invitation required`가 표시되고 제한 참가 대회로 안내된다. 신규 참가와 늦은 제출이 열려 있다고 가정하지 않는다.
 - 접근: Kaggle 로그인 후 규칙 동의가 필요하며, 참가자는 대회 주최자의 초대를 받아야 한다.
-- 공개 데이터 설명: `train/images/`, `train/masks/`, `test/images/`, `sample_submission.csv`. RGB 원본은 720×1280, mask는 배경 0 / 차선 1로 설명되어 있다.
+- 공개 데이터 설명: `train/images/`, `train/masks/`, `test/images/`, `sample_submission.csv`. RGB 원본은 720×1280, mask는 배경 0 / 차선 1로 설명되어 있다. 사용자가 제공한 실제 ZIP은 총 10,035개 항목이며 train JPEG 7,252장, test JPEG 2,782장, `sample_submission.csv`로 구성되어 있고 mask 파일은 포함되지 않았다.
 - 평가: test 이미지별 Dice를 계산하고 전체 이미지의 평균 Dice로 순위를 매긴다고 설명한다. 이는 전체 픽셀을 먼저 합산해 계산하는 pixel-global Dice와 다른 집계 방식이다.
 - 제출: `filename,rle_mask` CSV, 테스트 이미지당 한 행, lane이 없으면 `0`. RLE의 flatten 순서 등 세부 구현은 실제 `sample_submission.csv`와 규칙을 확인한 뒤 구현한다.
 - Data 탭에 표시된 라이선스는 MIT다. 공개 페이지는 로그인 전 상태이며 데이터 파일 목록과 개별 파일 크기는 공개하지 않는다. Data 탭에는 `sample_submission.csv` 85.98 kB가 표시되지만 미리보기는 규칙 동의 전 잠겨 있다.
@@ -131,6 +131,7 @@ python -m lane_segmentation.submission `
 - Kaggle CLI 2.2.5의 파일 목록 조회는 API 인증정보 부재로 실패했다. 실제 Data 파일 목록과 개별 용량은 초대 계정으로 로그인하고 규칙에 동의한 뒤 확인해야 한다.
 - 현재 미완료: 제한 대회 초대, Kaggle 로그인/OAuth, 규칙 동의, 데이터 다운로드, 실제 파일/라벨 검사, 실제 학습과 validation, 제출 RLE 검증.
 - sample submission 형식의 CSV 생성기와 C/F ordering·0/1 기반 RLE round-trip 테스트를 구현했다. 실제 Kaggle sample/template와 mask를 확보하지 못해 대회 evaluator 호환성을 확인한 것은 아니다.
+- 현재 ZIP의 sample submission은 `image_id,encoded_pixels` 2,782행이며 모든 `encoded_pixels`가 비어 있다. ZIP에는 학습 이미지 label/mask가 없고 checkpoint도 없어 학습 기반 예측과 실제 score 제출물을 만들 수 없다. 형식 확인용 all-empty CSV는 모델 예측/성능 결과와 구분한다.
 - Kaggle 대회는 2025-06-22 종료되었다. 페이지에는 현재 초대 제한이 표시되며, 늦은 제출을 사용할 수 있다는 표시를 확인하지 못했다. 새 공식 점수는 보고하지 않는다.
 - 실패 사례, loss curve, 실험별 성능 표는 실제 데이터 평가가 끝난 뒤 추가한다.
 

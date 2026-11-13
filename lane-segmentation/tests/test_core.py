@@ -130,7 +130,7 @@ def test_submission_uses_template_order_and_rle(tmp_path):
     Image.new("RGB", (12, 8), (20, 30, 40)).save(test_root / "second.jpg")
     Image.new("RGB", (12, 8), (40, 30, 20)).save(test_root / "first.jpg")
     template = tmp_path / "sample_submission.csv"
-    template.write_text("filename,rle_mask\nsecond.jpg,0\nfirst.jpg,0\n", encoding="utf-8")
+    template.write_text("image_id,encoded_pixels\nsecond.jpg,\nfirst.jpg,\n", encoding="utf-8")
     output = tmp_path / "submission.csv"
 
     generate_submission(
@@ -147,5 +147,5 @@ def test_submission_uses_template_order_and_rle(tmp_path):
 
     with output.open("r", newline="", encoding="utf-8") as file:
         rows = list(csv.DictReader(file))
-    assert [row["filename"] for row in rows] == ["second.jpg", "first.jpg"]
-    assert all(row["rle_mask"] == "1 96" for row in rows)
+    assert [row["image_id"] for row in rows] == ["second.jpg", "first.jpg"]
+    assert all(row["encoded_pixels"] == "1 96" for row in rows)

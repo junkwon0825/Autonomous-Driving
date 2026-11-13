@@ -8,6 +8,7 @@ data/raw/
 data/processed/
 data/external/
 data/submissions/
+data/*.zip
 kaggle.json
 access_token
 .kaggle/
