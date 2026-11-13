@@ -1,0 +1,6 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+numpy>=1.26,<3.0
+Pillow>=10,<12
+PyYAML>=6,<7
+pytest>=8,<9

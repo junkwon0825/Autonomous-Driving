@@ -1,0 +1,15 @@
+seed: 42
+device: auto
+image_size: [256, 512]
+data_root: data
+train_manifest: data/processed/train.csv
+val_manifest: data/processed/val.csv
+batch_size: 4
+num_workers: 0
+learning_rate: 0.001
+weight_decay: 0.0001
+epochs: 50
+early_stopping_patience: 8
+threshold: 0.5
+checkpoint_dir: experiments/baseline
+log_file: metrics.csv
