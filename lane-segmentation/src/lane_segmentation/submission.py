@@ -40,6 +40,8 @@ def _read_template(template_path):
             filename_column, mask_column = "image_id", "encoded_pixels"
         elif fieldnames == ["filename", "rle_mask"]:
             filename_column, mask_column = "filename", "rle_mask"
+        elif fieldnames == ["filename", "rle"]:
+            filename_column, mask_column = "filename", "rle"
         else:
             raise ValueError(f"Unsupported sample submission columns: {fieldnames}")
         rows = list(reader)
@@ -60,11 +62,23 @@ def generate_submission(
     device,
     rle_order,
     index_base,
+    legacy_template=None,
+    legacy_output_path=None,
 ):
+    if not 0 < threshold < 1:
+        raise ValueError("Prediction threshold must be within (0, 1)")
     fieldnames, filename_column, mask_column, rows = _read_template(sample_submission)
+    if (legacy_template is None) != (legacy_output_path is None):
+        raise ValueError("legacy_template and legacy_output_path must be provided together")
+    legacy = None
+    if legacy_template is not None:
+        legacy_fields, legacy_filename, legacy_mask, legacy_rows = _read_template(legacy_template)
+        if [row[legacy_filename] for row in legacy_rows] != [row[filename_column] for row in rows]:
+            raise ValueError("Legacy template filenames and order must match the sample submission")
+        legacy = (legacy_fields, legacy_filename, legacy_mask, legacy_rows)
     test_root = Path(test_root).resolve()
     predictions = []
-    for row in rows:
+    for index, row in enumerate(rows):
         image_path = (test_root / row[filename_column]).resolve()
         if not image_path.is_relative_to(test_root):
             raise ValueError(f"Test filename escapes the test image directory: {row[filename_column]}")
@@ -77,15 +91,24 @@ def generate_submission(
             threshold=threshold,
             device=device,
         )
-        row[mask_column] = encode_rle(mask, rle_order, index_base)
+        encoded_mask = encode_rle(mask, rle_order, index_base)
+        row[mask_column] = encoded_mask
+        if legacy is not None:
+            legacy[3][index][legacy[2]] = encoded_mask
         predictions.append(row)
 
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=fieldnames, lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(predictions)
+    def write_submission(path, columns, output_rows):
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", newline="", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=columns, lineterminator="\n")
+            writer.writeheader()
+            writer.writerows(output_rows)
+        return path
+
+    output_path = write_submission(output_path, fieldnames, predictions)
+    if legacy is not None:
+        write_submission(legacy_output_path, legacy[0], legacy[3])
     return output_path
 
 
@@ -96,6 +119,9 @@ def main():
     parser.add_argument("--sample-submission", required=True)
     parser.add_argument("--test-root", required=True)
     parser.add_argument("--output", default="data/submissions/submission.csv")
+    parser.add_argument("--threshold", type=float)
+    parser.add_argument("--legacy-template")
+    parser.add_argument("--legacy-output")
     parser.add_argument("--rle-order", choices=("C", "F"), required=True)
     parser.add_argument("--index-base", type=int, choices=(0, 1), required=True)
     args = parser.parse_args()
@@ -113,12 +139,16 @@ def main():
         test_root=args.test_root,
         output_path=resolve(args.output) if not Path(args.output).is_absolute() else args.output,
         image_size=tuple(config["image_size"]),
-        threshold=float(config["threshold"]),
+        threshold=float(config["threshold"] if args.threshold is None else args.threshold),
         device=device,
         rle_order=args.rle_order,
         index_base=args.index_base,
+        legacy_template=resolve(args.legacy_template) if args.legacy_template else None,
+        legacy_output_path=resolve(args.legacy_output) if args.legacy_output else None,
     )
     print(f"Submission saved: {output_path}")
+    if args.legacy_output:
+        print(f"Legacy-header submission saved: {resolve(args.legacy_output)}")
 
 
 if __name__ == "__main__":

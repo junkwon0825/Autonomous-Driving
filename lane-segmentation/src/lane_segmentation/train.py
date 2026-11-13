@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import yaml
+from PIL import Image, ImageDraw
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -34,6 +35,56 @@ def set_seed(seed):
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+
+def save_loss_curve(metrics_path, output_path):
+    with Path(metrics_path).open("r", newline="", encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+    if not rows:
+        raise ValueError(f"No epoch metrics found in {metrics_path}")
+    train_losses = [float(row["train_loss"]) for row in rows]
+    val_losses = [float(row["val_loss"]) for row in rows]
+    values = train_losses + val_losses
+    low, high = min(values), max(values)
+    padding = max((high - low) * 0.1, 0.01)
+    low -= padding
+    high += padding
+    width, height = 1000, 600
+    left, top, right, bottom = 80, 55, 960, 520
+    canvas = Image.new("RGB", (width, height), "white")
+    draw = ImageDraw.Draw(canvas)
+    draw.text((left, 18), "U-Net BCE training and validation loss", fill="black")
+    draw.line((left, top, left, bottom, right, bottom), fill=(40, 40, 40), width=2)
+    draw.text((left, bottom + 12), "Epoch", fill="black")
+    draw.text((12, top), f"{high:.3f}", fill="black")
+    draw.text((12, bottom - 10), f"{low:.3f}", fill="black")
+
+    def points(losses):
+        x_span = max(len(losses) - 1, 1)
+        return [
+            (
+                round(left + index * (right - left) / x_span),
+                round(bottom - (loss - low) * (bottom - top) / (high - low)),
+            )
+            for index, loss in enumerate(losses)
+        ]
+
+    for losses, color, label, offset in (
+        (train_losses, (35, 105, 190), "Train BCE", 0),
+        (val_losses, (220, 75, 55), "Validation BCE", 120),
+    ):
+        line = points(losses)
+        if len(line) > 1:
+            draw.line(line, fill=color, width=4)
+        for x, y in line:
+            draw.ellipse((x - 4, y - 4, x + 4, y + 4), fill=color)
+        draw.line((left + offset, height - 24, left + offset + 24, height - 24), fill=color, width=4)
+        draw.text((left + offset + 32, height - 32), label, fill="black")
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(output_path)
+    return output_path
 
 
 def _run_epoch(model, loader, loss_fn, device, optimizer=None, threshold=0.5):
@@ -86,8 +137,9 @@ def train(config_path):
     validate_split(train_manifest, val_manifest)
 
     image_size = tuple(int(value) for value in config["image_size"])
-    train_set = LaneSegmentationDataset(train_manifest, data_root, image_size)
-    val_set = LaneSegmentationDataset(val_manifest, data_root, image_size)
+    mask_threshold = int(config.get("mask_threshold", 127))
+    train_set = LaneSegmentationDataset(train_manifest, data_root, image_size, mask_threshold)
+    val_set = LaneSegmentationDataset(val_manifest, data_root, image_size, mask_threshold)
     device = select_device(config.get("device", "auto"))
     loader_options = {
         "batch_size": int(config["batch_size"]),
@@ -171,6 +223,9 @@ def train(config_path):
                     print(f"early stopping after {epoch} epochs")
                     break
 
+    curve_path = resolve(config.get("loss_curve", str(run_dir / "loss_curve.png")))
+    save_loss_curve(log_path, curve_path)
+    print(f"Loss curve saved: {curve_path}")
     if not checkpoint_path.is_file():
         raise RuntimeError("Training completed without saving a best checkpoint")
     return checkpoint_path

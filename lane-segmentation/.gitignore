@@ -16,7 +16,17 @@ access_token
 experiments/*/
 !experiments/README.md
 results/predictions/
+!results/predictions/
+results/predictions/*
+!results/predictions/kaggle-unet-bce/
+results/predictions/kaggle-unet-bce/*
+!results/predictions/kaggle-unet-bce/*.png
+!results/predictions/kaggle-unet-bce/*.json
+!results/predictions/kaggle-unet-bce/*.csv
 results/figures/
+!results/figures/
+results/figures/*
+!results/figures/kaggle-unet-bce-loss.png
 
 *.pt
 *.pth

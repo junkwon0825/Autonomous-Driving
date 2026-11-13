@@ -10,12 +10,15 @@ from torch.utils.data import Dataset
 
 
 class LaneSegmentationDataset(Dataset):
-    def __init__(self, manifest, data_root, image_size=(256, 512)):
+    def __init__(self, manifest, data_root, image_size=(256, 512), mask_threshold=127):
         self.manifest = Path(manifest)
         self.data_root = Path(data_root)
         self.height, self.width = image_size
         if self.height <= 0 or self.width <= 0:
             raise ValueError("image_size dimensions must be positive")
+        if not 0 <= mask_threshold <= 255:
+            raise ValueError("mask_threshold must be between 0 and 255")
+        self.mask_threshold = mask_threshold
         if not self.manifest.is_file():
             raise FileNotFoundError(f"Manifest not found: {self.manifest}")
 
@@ -48,7 +51,7 @@ class LaneSegmentationDataset(Dataset):
         image = image.resize(size, Image.Resampling.BILINEAR)
         mask = mask.resize(size, Image.Resampling.NEAREST)
         image_array = np.asarray(image, dtype=np.float32) / 255.0
-        mask_array = (np.asarray(mask, dtype=np.uint8) > 0).astype(np.float32)
+        mask_array = (np.asarray(mask, dtype=np.uint8) > self.mask_threshold).astype(np.float32)
         image_tensor = torch.from_numpy(image_array).permute(2, 0, 1).contiguous()
         mask_tensor = torch.from_numpy(mask_array).unsqueeze(0).contiguous()
 
