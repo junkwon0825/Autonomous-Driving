@@ -13,7 +13,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from lane_segmentation.data import LaneSegmentationDataset, validate_split
-from lane_segmentation.metrics import binary_metrics_from_counts, count_binary_predictions
+from lane_segmentation.metrics import binary_metrics_from_counts, count_binary_predictions, mean_image_dice
 from lane_segmentation.model import UNet
 
 
@@ -41,6 +41,7 @@ def _run_epoch(model, loader, loss_fn, device, optimizer=None, threshold=0.5):
     model.train(training)
     total_loss = 0.0
     sample_count = 0
+    image_dice_total = 0.0
     counts = [0, 0, 0]
     context = torch.enable_grad if training else torch.inference_mode
 
@@ -60,10 +61,13 @@ def _run_epoch(model, loader, loss_fn, device, optimizer=None, threshold=0.5):
             sample_count += batch_size
             batch_counts = count_binary_predictions(logits, masks, threshold)
             counts = [total + current for total, current in zip(counts, batch_counts)]
+            image_dice_total += mean_image_dice(logits, masks, threshold) * batch_size
 
     if sample_count == 0:
         raise ValueError("Cannot run an epoch with an empty data loader")
-    return total_loss / sample_count, binary_metrics_from_counts(*counts)
+    metrics = binary_metrics_from_counts(*counts)
+    metrics["mean_image_dice"] = image_dice_total / sample_count
+    return total_loss / sample_count, metrics
 
 
 def train(config_path):
@@ -113,7 +117,16 @@ def train(config_path):
     with log_path.open("w", newline="", encoding="utf-8") as log_file:
         writer = csv.DictWriter(
             log_file,
-            fieldnames=("epoch", "train_loss", "val_loss", "val_dice", "val_iou", "val_precision", "val_recall"),
+            fieldnames=(
+                "epoch",
+                "train_loss",
+                "val_loss",
+                "val_mean_image_dice",
+                "val_pixel_dice",
+                "val_iou",
+                "val_precision",
+                "val_recall",
+            ),
         )
         writer.writeheader()
         for epoch in range(1, int(config["epochs"]) + 1):
@@ -123,13 +136,20 @@ def train(config_path):
                 "epoch": epoch,
                 "train_loss": train_loss,
                 "val_loss": val_loss,
-                **{f"val_{name}": value for name, value in val_metrics.items()},
+                "val_mean_image_dice": val_metrics["mean_image_dice"],
+                "val_pixel_dice": val_metrics["dice"],
+                **{
+                    f"val_{name}": value
+                    for name, value in val_metrics.items()
+                    if name not in ("mean_image_dice", "dice")
+                },
             }
             writer.writerow(row)
             log_file.flush()
             print(
                 f"epoch={epoch} train_loss={train_loss:.5f} val_loss={val_loss:.5f} "
-                f"dice={val_metrics['dice']:.5f} iou={val_metrics['iou']:.5f}"
+                f"mean_image_dice={val_metrics['mean_image_dice']:.5f} "
+                f"pixel_dice={val_metrics['dice']:.5f} iou={val_metrics['iou']:.5f}"
             )
 
             if val_loss < best_loss:

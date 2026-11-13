@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from lane_segmentation.data import LaneSegmentationDataset, validate_split
 from lane_segmentation.inference import predict_image
-from lane_segmentation.metrics import binary_metrics_from_counts, count_binary_predictions
+from lane_segmentation.metrics import binary_metrics_from_counts, count_binary_predictions, mean_image_dice
 from lane_segmentation.model import UNet
 from lane_segmentation.train import select_device
 
@@ -32,6 +32,7 @@ def evaluate(model, loader, device, threshold=0.5):
     loss_fn = nn.BCEWithLogitsLoss()
     total_loss = 0.0
     sample_count = 0
+    image_dice_total = 0.0
     counts = [0, 0, 0]
     for images, masks in loader:
         images = images.to(device, non_blocking=device.type == "cuda")
@@ -40,9 +41,14 @@ def evaluate(model, loader, device, threshold=0.5):
         total_loss += loss_fn(logits, masks).item() * images.shape[0]
         sample_count += images.shape[0]
         counts = [total + current for total, current in zip(counts, count_binary_predictions(logits, masks, threshold))]
+        image_dice_total += mean_image_dice(logits, masks, threshold) * images.shape[0]
     if sample_count == 0:
         raise ValueError("Cannot evaluate an empty validation dataset")
-    return {"val_loss": total_loss / sample_count, **binary_metrics_from_counts(*counts)}
+    return {
+        "val_loss": total_loss / sample_count,
+        "mean_image_dice": image_dice_total / sample_count,
+        **binary_metrics_from_counts(*counts),
+    }
 
 
 def save_visualization(image_path, mask_path, prediction, destination, image_size):

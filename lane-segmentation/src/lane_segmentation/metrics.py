@@ -33,3 +33,18 @@ def count_binary_predictions(logits, targets, threshold=0.5):
 
 def binary_metrics(logits, targets, threshold=0.5):
     return binary_metrics_from_counts(*count_binary_predictions(logits, targets, threshold))
+
+
+@torch.no_grad()
+def mean_image_dice(logits, targets, threshold=0.5):
+    if logits.shape != targets.shape:
+        raise ValueError(f"Logit/target shapes differ: {tuple(logits.shape)} != {tuple(targets.shape)}")
+    predictions = torch.sigmoid(logits) >= threshold
+    targets = targets >= 0.5
+    reduce_dims = tuple(range(1, predictions.ndim))
+    true_positive = torch.count_nonzero(predictions & targets, dim=reduce_dims).float()
+    false_positive = torch.count_nonzero(predictions & ~targets, dim=reduce_dims).float()
+    false_negative = torch.count_nonzero(~predictions & targets, dim=reduce_dims).float()
+    denominator = 2 * true_positive + false_positive + false_negative
+    dice = torch.where(denominator == 0, 1.0, 2 * true_positive / denominator)
+    return dice.mean().item()

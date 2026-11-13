@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 
 from lane_segmentation.data import LaneSegmentationDataset, validate_split
 from lane_segmentation.inference import predict_image
-from lane_segmentation.metrics import binary_metrics, binary_metrics_from_counts
+from lane_segmentation.metrics import binary_metrics, binary_metrics_from_counts, mean_image_dice
 from lane_segmentation.model import UNet
 
 
@@ -72,6 +72,17 @@ def test_binary_metrics_and_empty_target_conventions():
         "precision": 0.0,
         "recall": 0.0,
     }
+
+
+def test_mean_image_dice_matches_average_per_image_score():
+    logits = torch.full((2, 1, 1, 10), -10.0)
+    logits[0, 0, 0, 0] = 10.0
+    targets = torch.zeros_like(logits)
+    targets[0, 0, 0, 0] = 1.0
+    targets[1] = 1.0
+
+    assert mean_image_dice(logits, targets) == 0.5
+    assert binary_metrics(logits, targets)["dice"] == pytest.approx(1 / 6)
 
 
 def test_split_rejects_shared_sequence(tmp_path):

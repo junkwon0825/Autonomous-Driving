@@ -1,34 +1,39 @@
-# 차선 분할 포트폴리오
+# Lane Segmentation Challenge 재현 프로젝트
 
-## 프로젝트 현황
+## 프로젝트 배경
 
-이 저장소는 학부 시절의 Kaggle 참여 경험과 새로 수행하는 재현 실험을 구분해 기록한다. 학부 시절 기록인 Public Score `0.69166`은 과거 결과이며, 현재 구현의 성능으로 간주하지 않는다. 현재는 U-Net + BCE baseline과 재현 가능한 학습·평가 경로를 구현하는 단계다. 새 프로젝트의 점수는 실제 데이터로 학습과 평가를 수행한 뒤에만 기록한다.
+학부 자동차 인공지능 수업에서 딥러닝과 차선 분할을 처음 경험하고, Coursera 학습 이후 Kaggle `Lane Segmentation Challenge`에 참가했다. 당시 기록한 Public Score `0.69166`은 과거 대회 결과이며, 현재 코드의 성능이나 새 실험 결과와 구분한다.
 
-기본 모델은 256×512 RGB 입력을 받는 binary U-Net이며, encoder 채널은 32, 64, 128, 256, 512다. 모델은 logits를 출력하고, 학습에는 `BCEWithLogitsLoss`를 사용한다. Sigmoid와 임계값 처리는 평가·추론 때만 적용한다.
+이번 구현은 같은 Kaggle 대회의 이진 차선 마스크 과제를 PyTorch로 재구성하고, 고정된 validation split에서 baseline과 개선 실험을 비교하는 것을 목표로 한다. 새 Kaggle 제출은 대회가 종료되어 가능한 것으로 간주하지 않는다.
 
-## 데이터셋 조사와 선택
+## Kaggle 대회 및 데이터
 
-| 후보 | 과제/라벨 | 분량과 분할 | 접근·이용 조건 | 이 프로젝트와의 적합성 |
-|---|---|---|---|---|
-| [CVPR 2018 WAD Video Segmentation Challenge](https://www.kaggle.com/competitions/cvpr-2018-autonomous-driving) | 차선이 아니라 자동차·오토바이·자전거·보행자·트럭·버스·삼륜차의 인스턴스 분할. 학습 라벨 픽셀값에 클래스와 인스턴스 ID가 함께 인코딩되고, 제출은 인스턴스별 RLE CSV. | Kaggle 페이지에 `train_color.zip`, `train_label.zip`, `test.zip` 등 8개 파일이 표시되나, 현재 확인한 화면에는 총 용량이 표시되지 않았다. | Kaggle 로그인 및 규칙 동의가 요구될 수 있으며, 현재 페이지의 `Late Submission` 상태와 2018년 종료 일정을 확인했다. 새 제출·점수는 목표로 삼지 않는다. 데이터는 차선 모델 학습에 사용하지 않는다. | 지정한 대회이지만 차선 라벨이 없으므로 차선 분할 데이터로 부적합하다. 결과물에는 문제 정의와 제출 형식 비교를 위해 기록한다. |
-| [CULane](https://xingangpan.github.io/projects/CULane.html) | 차선 마킹/곡선의 점 좌표와 `laneseg_label_w16` 픽셀 라벨을 제공. 공개 설명은 train 88,880 / validation 9,675 / test 34,680 프레임. | 55시간 이상 주행 영상에서 추출한 133,235 프레임. 공식 train/validation/test 목록과 어려운 장면 카테고리가 있다. | 공식 페이지에서 Google Drive/Baidu 다운로드. 데이터는 비상업적 연구·교육·개인 실험용이며 재배포와 상업적 이용을 제한한다. 원본에는 영상 프레임이 있어 임의 프레임 분할은 누수 위험이 있다. | **우선 후보.** 픽셀 마스크와 분리 목록이 있어 binary segmentation baseline에 가장 직접적이다. 우선 공식 train/val 목록을 사용하고 작은 부분 집합으로 시작한다. 전체 파일은 아직 받지 않았다. |
-| [TuSimple Lane Detection Challenge](https://github.com/TuSimple/tusimple-benchmark) | JSON의 lane x/y 좌표를 담은 polyline 라벨이며 pixel mask가 아니다. segmentation 실험에는 선 두께를 정해 mask로 래스터화해야 하고, 공식 평가는 지정 높이의 lane point matching 기준이다. | 약 7,000개 1초 video clip(각 20 frames), train 3,626 annotated frames / test 2,782 clips. | CVPR 2017 challenge의 공개 benchmark 문서에서 데이터/ground-truth 다운로드를 안내한다. 실제 용량과 데이터 사용 조건은 배포처에서 확인해야 한다. 코드 저장소의 Apache-2.0은 데이터 자체의 이용 허가와 동일하지 않다. | 비교적 작고 접근이 간단한 대안이지만, 선 두께 선택이 픽셀 평가 정의에 영향을 준다. CVPR 2017 challenge 제출/leaderboard는 현재 목표가 아니다. |
-| [BDD100K](https://github.com/bdd100k/bdd100k) | 다중 작업 주행 데이터. lane detection은 차선 좌표 기반이며 별도 drivable-area/semantic mask 과제와 구별해야 한다. | 공식 소개는 100K 주행 동영상 및 10개 태스크를 설명한다. 태스크별 라벨 수와 데이터 크기는 별도로 확인해야 한다. | 공식 홈페이지와 사용 문서를 통해 신청·이용 조건을 확인해야 한다. | 환경 다양성은 장점이나 이 binary lane-mask baseline의 첫 데이터셋으로는 전처리 범위가 커 후속 후보로 둔다. |
+대회: [Lane Segmentation Challenge](https://www.kaggle.com/competitions/lanesegmentationchallenge)
 
-### 선택 및 데이터 접근 상태
+Kaggle 페이지에서 확인한 내용:
 
-첫 실험 데이터로 CULane을 선택했다. pixel label 파일과 공식 분할이 있어 모델 입출력을 과제에 바로 맞출 수 있고, 곡선·가림·야간 등 까다로운 조건을 살펴볼 수 있기 때문이다. 다만 전체 데이터 학습을 바로 하지 않고, 합법적인 개인 실험 사용 조건을 확인한 뒤 일부 데이터로 데이터 로딩과 학습 경로부터 검증한다. 원본 이미지/마스크를 Git에 올리지 않는다.
+- 일정: 2025-05-15 시작, 2025-06-22 종료. 현재 페이지에 `Invitation required`가 표시되고 제한 참가 대회로 안내된다. 신규 참가와 늦은 제출이 열려 있다고 가정하지 않는다.
+- 접근: Kaggle 로그인 후 규칙 동의가 필요하며, 참가자는 대회 주최자의 초대를 받아야 한다.
+- 공개 데이터 설명: `train/images/`, `train/masks/`, `test/images/`, `sample_submission.csv`. RGB 원본은 720×1280, mask는 배경 0 / 차선 1로 설명되어 있다.
+- 평가: test 이미지별 Dice를 계산하고 전체 이미지의 평균 Dice로 순위를 매긴다고 설명한다. 이는 전체 픽셀을 먼저 합산해 계산하는 pixel-global Dice와 다른 집계 방식이다.
+- 제출: `filename,rle_mask` CSV, 테스트 이미지당 한 행, lane이 없으면 `0`. RLE의 flatten 순서 등 세부 구현은 실제 `sample_submission.csv`와 규칙을 확인한 뒤 구현한다.
+- Data 탭에 표시된 라이선스는 MIT다. 공개 페이지는 로그인 전 상태이며 데이터 파일 목록과 개별 파일 크기는 공개하지 않는다. Data 탭에는 `sample_submission.csv` 85.98 kB가 표시되지만 미리보기는 규칙 동의 전 잠겨 있다.
 
-데이터는 CULane 공식 프로젝트 페이지의 Google Drive 또는 Baidu Cloud 링크에서 직접 내려받아야 한다. 안내된 train/validation 목록과 mask 파일을 확보하고, 각 샘플을 아래 CSV 형식으로 정리한다. `image`와 `mask`는 `data_root` 기준 상대 경로이며 `sequence_id`는 선택 필드다.
+실행 시점에는 브라우저에서 Kaggle 로그아웃 상태였고, `.kaggle/kaggle.json`, `KAGGLE_USERNAME`, `KAGGLE_KEY`도 없었다. 설치한 Kaggle CLI로 파일 목록을 요청했을 때 인증 오류가 반환됐다. 대회 페이지는 초대를 요구하므로, 데이터 다운로드와 실제 마스크 확인은 초대된 계정으로 로그인하고 규칙에 동의한 뒤 진행해야 한다. API 토큰을 코드나 저장소에 넣지 않는다.
 
-```csv
-image,mask,sequence_id
-driver_23_30frame/06030817_0755.MP4/00000.jpg,laneseg_label_w16/driver_23_30frame/06030817_0755.MP4/00000.png,driver_23_30frame/06030817_0755.MP4
-```
+## 현재 구현
 
-원본 목록의 경로는 실제로 받은 데이터 디렉터리에 맞춰 CSV에 기록한다. 별도 `train.csv`, `val.csv`를 생성해 공식 분할을 보존한다. CSV의 영상 식별자(`sequence_id`)는 두 분할 간 겹치면 안 된다. 다운로드가 완료되지 않아 현재 저장소에는 실제 데이터·분할 파일이 없다. Kaggle 자격 증명도 설정하거나 저장하지 않았다.
+### 모델과 학습
 
-## 구조
+- PyTorch U-Net, encoder channels `32-64-128-256-512`, skip connection
+- 입력 RGB, logits 출력, `BCEWithLogitsLoss`, AdamW
+- seed 고정, best validation-loss checkpoint 저장, early stopping
+- validation BCE, Dice/IoU/precision/recall, 예측 및 4-panel 시각화
+- 지표에는 validation 샘플별 평균 Dice와 전체 픽셀 기준 Dice를 별도로 기록한다. 대회 설명의 평균 Dice와 비교할 때는 `mean_image_dice`를 사용한다.
+
+원본 720×1280의 16:9 비율을 유지하기 위해 기본 입력 크기를 288×512로 설정했다. 이미지는 bilinear, mask는 nearest-neighbor로 축소하며, 실제 mask 픽셀값은 데이터 접근 후 다시 검사한다.
+
+### 코드 구조
 
 ```text
 lane-segmentation/
@@ -42,69 +47,74 @@ lane-segmentation/
 │   ├── inference.py
 │   ├── evaluate.py
 │   └── smoke_test.py
-├── notebooks/README.md
+├── tests/
 ├── experiments/README.md
 ├── results/README.md
-├── tests/test_core.py
-├── requirements.txt
-└── .gitignore
+└── requirements.txt
 ```
 
-### 코드 설명 기준
-
-- `#1.data`: CSV 기반 데이터셋, 입력 크기 조정, image bilinear / mask nearest-neighbor.
-- `#2.model`: 32-64-128-256-512 채널 U-Net과 skip connection.
-- `#3.compile,train`: 고정 seed, BCEWithLogitsLoss, AdamW, early stopping, best checkpoint 및 epoch CSV.
-- `#4.evaluate,predict`: validation loss, Dice/IoU/precision/recall, 원본·정답·예측·overlay 시각화.
+학습 코드는 `#1.data`, `#2.model`, `#3.compile,train`, `#4.evaluate,predict` 흐름을 따른다. 현재 Dataset은 CSV manifest의 `image,mask` 쌍을 읽는다. 실제 Kaggle 파일의 이름·확장자·매칭 규칙·mask 값·분할을 확인한 뒤 manifest 생성/검증을 연결한다. 아직 Kaggle 데이터가 없어 데이터 구조에 대한 가정을 코드로 고정하지 않았다.
 
 ## 환경 설정
 
-Windows PowerShell에서 프로젝트 폴더를 기준으로 실행한다. Python 3.11 또는 3.12 사용을 권장한다. 현재 확인한 기본 Python 3.14에는 PyTorch가 없었고, RTX 4060(8 GB)이 감지됐다. 기존 conda 환경을 덮어쓰지 않도록 새 `.venv`에 CUDA 12.8 빌드의 PyTorch 2.11.0을 포함한 의존성을 설치한다.
+Windows PowerShell에서 프로젝트 폴더에서 실행한다. Python 3.11 또는 3.12와 기존 CUDA 12.8 PyTorch 2.11.0 환경을 사용한다.
 
 ```powershell
-python --version
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 python -m pip install -e .
-python -c "import torch; print(torch.__version__, torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
+python -m pip install kaggle
 ```
 
-기본 requirements는 Windows용 PyTorch CUDA 12.8 wheel을 고정한다. 다른 OS/GPU 조합을 사용할 경우 PyTorch 공식 설치 안내에서 해당 플랫폼에 맞는 wheel을 고른다. `torch.cuda.is_available()`가 `False`이면 CPU로 조용히 넘어가지 말고 드라이버와 wheel 조합을 점검한다. 프로젝트 기본 설정은 CUDA 자동 선택이며, `device: cuda`를 명시하면 CUDA 미지원 시 오류를 낸다.
+현재 개발 환경에서 PyTorch `2.11.0+cu128`가 RTX 4060 Laptop GPU에서 동작하는 것을 확인했다. 다른 PyTorch wheel로 덮어쓰지 말고 다음으로 CUDA 상태를 확인한다.
 
-첫 명령의 Python이 3.11 또는 3.12가 아니면 해당 버전을 설치/선택한 뒤 `.venv`를 만든다. Windows Python Launcher(`py`)가 설치된 환경에서는 `py -3.12 -m venv .venv`를 대신 사용할 수 있다.
+```powershell
+python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.version.cuda); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
+```
 
-## 실행
+## 데이터 접근 및 실행
 
-먼저 핵심 테스트와 소량 합성 데이터 end-to-end smoke test를 수행한다.
+1. [대회 페이지](https://www.kaggle.com/competitions/lanesegmentationchallenge)에 Kaggle 계정으로 로그인한다.
+2. 대회 주최자에게 초대를 받아야 한다. 대회가 제한 참가 상태이므로 계정만으로 접근이 보장되지 않는다.
+3. 초대를 받은 계정에서 Data 탭을 열고 대회 규칙에 동의한다.
+4. Kaggle CLI 인증은 토큰을 직접 코드에 쓰지 않는 `kaggle auth login` OAuth 흐름을 권장한다. CLI 다운로드는 초대/규칙 동의가 된 뒤 실행한다.
+5. 실제 파일 목록과 압축 구조를 확인한 후 `data/raw/`에 내려받고, 마스크 값·이미지 해상도·파일 매칭을 검증한다. 원본 데이터와 Kaggle 인증 파일은 Git에 추가하지 않는다.
+
+CLI 인증 및 데이터 접근 확인:
+
+```powershell
+kaggle auth login
+kaggle competitions files -c lanesegmentationchallenge
+kaggle competitions download -c lanesegmentationchallenge -p data/raw
+```
+
+데이터가 준비되어 `configs/baseline.yaml`이 실제 manifest를 가리키도록 수정된 뒤:
 
 ```powershell
 python -m pytest
 python -m lane_segmentation.smoke_test
-```
-
-데이터를 준비한 뒤 `configs/baseline.yaml`의 `data_root`, `train_manifest`, `val_manifest`를 조정한다. 분할은 config/manifest로 고정하며, 프레임 단위 무작위 분할로 동일 영상이 양쪽에 섞이지 않도록 한다.
-
-```powershell
 python -m lane_segmentation.train --config configs/baseline.yaml
-python -m lane_segmentation.evaluate --config configs/baseline.yaml --checkpoint experiments/baseline/best.pt
+python -m lane_segmentation.evaluate --config configs/baseline.yaml --checkpoint experiments/kaggle-unet-bce/best.pt
 ```
 
-로그와 체크포인트는 `experiments/`에, 정성 시각화는 `results/`에 저장된다. 이 경로들은 기본적으로 Git에서 제외한다. 전체 학습, 개선 실험(BCE+Dice, augmentation, TTA), 외부 검증, 실제 CULane 결과 및 Kaggle 제출은 아직 수행하지 않았다.
+## 실험 계획
 
-## 평가 정의 및 면접 메모
+1. U-Net + BCE baseline
+2. BCE/Dice combined loss
+3. 같은 split에서 data augmentation 비교
+4. validation 성능을 확인한 뒤 TTA 비교
 
-학습은 pixel-level BCE와 logits를 사용한다. BCE는 각 픽셀의 이진 분류를 직접 최적화하고, Dice loss는 전경/배경 픽셀 불균형에서 겹침 비율을 강조한다. baseline에서는 변수를 분리하기 위해 BCE만 사용하고, 다음 실험에서 같은 split으로 BCE+Dice를 비교한다.
+대회 평가가 이미지별 평균 Dice인 점을 반영해 모든 실험에서 동일한 validation 이미지 목록과 `mean_image_dice`를 사용한다. validation threshold는 validation 데이터에서만 조정한다. 실제 점수나 개선 결과는 실행 후에만 기록한다.
 
-Dice와 IoU는 동일한 이진 예측에 대해 `Dice = 2 IoU / (1 + IoU)` 관계가 있다. 구현 지표는 validation 전체 픽셀의 혼동 행렬을 합산해 계산하며, threshold는 기본 0.5다. 전경과 예측이 모두 비어 있는 샘플/집합에서는 Dice와 IoU를 1로 정의하고, 양성 분모가 없는 precision/recall은 0으로 둔다. 이후 threshold tuning은 validation에서만 선택하고 테스트 데이터에는 재조정하지 않는다.
+## 검증 현황 및 한계
 
-U-Net은 고해상도 위치 정보를 decoder에 전달하는 skip connection을 제공해 얇고 위치가 중요한 구조를 보존하는 데 적합하다. TTA는 원본/좌우 반전 등 변환 입력의 예측을 원본 좌표로 되돌려 평균하는 방식이지만, 현재 구현·성능 검증은 하지 않았다. 실제 주행 적용에는 시간 연속성, 카메라 캘리브레이션, 지연 시간, OOD/악천후 검증, 안전 모니터링과 시스템 통합이 추가로 필요하다.
+- 확인 완료: Python 3.12, PyTorch 2.11.0+cu128, RTX 4060 Laptop GPU.
+- 현재 코드 검증: `python -m pytest -q` 6개 통과. 합성 이미지 2 train / 2 validation으로 1 epoch GPU smoke test, checkpoint 저장/재로딩, 시각화 생성도 통과했다. 이는 실행 경로 검증이며 Kaggle 데이터 성능이 아니다.
+- Kaggle CLI 2.2.5의 파일 목록 조회는 API 인증정보 부재로 실패했다. 실제 Data 파일 목록과 개별 용량은 초대 계정으로 로그인하고 규칙에 동의한 뒤 확인해야 한다.
+- 현재 미완료: 제한 대회 초대, Kaggle 로그인/OAuth, 규칙 동의, 데이터 다운로드, 실제 파일/라벨 검사, 실제 학습과 validation, 제출 RLE 검증.
+- Kaggle 대회는 2025-06-22 종료되었다. 페이지에는 현재 초대 제한이 표시되며, 늦은 제출을 사용할 수 있다는 표시를 확인하지 못했다. 새 공식 점수는 보고하지 않는다.
+- 실패 사례, loss curve, 실험별 성능 표는 실제 데이터 평가가 끝난 뒤 추가한다.
 
-## 현재 검증 상태
-
-- Python 3.12 가상환경과 CUDA 12.8 PyTorch 2.11.0을 설치했고, RTX 4060 Laptop GPU 연산을 확인했다.
-- `python -m pytest -q`: 5개 테스트 통과.
-- 합성 데이터 2 train / 2 validation 샘플로 GPU에서 1 epoch 학습, validation metric 계산, checkpoint 저장·재로딩, 예측 shape 검사와 4-panel 시각화 생성까지 smoke test를 통과했다. 이 결과는 코드 실행 확인용이며 실제 데이터 성능이 아니다.
-- 실제 데이터 접근, 전체 학습, 실제 모델 점수, 실패 사례 분석, Kaggle 제출 기록은 아직 없다.
-- 과거 Public Score `0.69166`은 학부 시절 기록으로만 인용한다.
+학부 시절의 Public Score `0.69166`과 신규 validation 지표는 평가 데이터가 다르므로 직접적인 개선량으로 비교하지 않는다.
