@@ -13,6 +13,8 @@ python -m pip install kaggle
 
 다운로드 후 압축 구조를 먼저 확인한다. 파일명과 확장자, mask encoding, sample submission의 RLE 순서를 실제 데이터에서 확인하기 전까지 추측하여 변환하지 않는다. 실제 데이터 경로, 매칭, 검증을 통과한 뒤 `data/processed/train.csv`와 `data/processed/val.csv`에 `image,mask,sequence_id` manifest를 생성하고 `configs/baseline.yaml`에 반영한다. 동일 주행 구간의 연속 프레임이 있으면 `sequence_id` 단위로 split을 나눈다.
 
+학습 checkpoint와 실제 `test/images`, `sample_submission.csv`를 확보한 뒤 `python -m lane_segmentation.submission`으로 제출 CSV를 생성한다. 대회 설명은 RLE flatten 방향과 run index base를 특정하지 않아 CLI에서 두 값을 필수로 받는다. 대회 제공 helper/명세를 확인하기 전에는 값을 선택하지 않는다. 출력은 `data/submissions/`에 저장하며 Git에서 제외한다.
+
 대회 data page에 MIT license 링크가 표시된다. 이용 시 Kaggle 대회 규칙과 해당 라이선스 내용을 함께 확인한다. 데이터, sample submission, Kaggle token 파일은 Git에 올리지 않는다. 저장소의 `.gitignore`는 `data/raw/`, `data/processed/`, `data/submissions/`, Kaggle credential 파일을 제외한다.
 
 CULane 다운로드 실험 파일은 로컬 `data/raw/downloads/`에 남아 있을 수 있으나 현재 대회의 실험 입력으로 사용하지 않는다.

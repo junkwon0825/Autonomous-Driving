@@ -46,6 +46,7 @@ lane-segmentation/
 │   ├── train.py
 │   ├── inference.py
 │   ├── evaluate.py
+│   ├── submission.py
 │   └── smoke_test.py
 ├── tests/
 ├── experiments/README.md
@@ -85,9 +86,9 @@ python -c "import torch; print(torch.__version__, torch.cuda.is_available(), tor
 CLI 인증 및 데이터 접근 확인:
 
 ```powershell
-kaggle auth login
-kaggle competitions files -c lanesegmentationchallenge
-kaggle competitions download -c lanesegmentationchallenge -p data/raw
+.\.venv\Scripts\kaggle.exe auth login
+.\.venv\Scripts\kaggle.exe competitions files -c lanesegmentationchallenge
+.\.venv\Scripts\kaggle.exe competitions download -c lanesegmentationchallenge -p data/raw
 ```
 
 데이터가 준비되어 `configs/baseline.yaml`이 실제 manifest를 가리키도록 수정된 뒤:
@@ -98,6 +99,21 @@ python -m lane_segmentation.smoke_test
 python -m lane_segmentation.train --config configs/baseline.yaml
 python -m lane_segmentation.evaluate --config configs/baseline.yaml --checkpoint experiments/kaggle-unet-bce/best.pt
 ```
+
+실제 대회 테스트 파일과 `sample_submission.csv`를 확보해 baseline checkpoint를 만든 뒤 제출 CSV를 생성한다. 이 명령은 sample submission의 `filename` 행 순서를 유지하고 파일 이름과 mask 개수를 검사한다.
+
+```powershell
+python -m lane_segmentation.submission `
+  --config configs/baseline.yaml `
+  --checkpoint experiments/kaggle-unet-bce/best.pt `
+  --sample-submission data/raw/lanesegmentationchallenge/sample_submission.csv `
+  --test-root data/raw/lanesegmentationchallenge/test/images `
+  --output data/submissions/submission.csv `
+  --rle-order F `
+  --index-base 1
+```
+
+대회 공개 설명에는 RLE CSV의 두 열과 빈 mask의 `"0"`은 명시되어 있지만, flatten 방향과 run 시작 인덱스는 확인할 수 없었다. 그러므로 `--rle-order`와 `--index-base`는 의도적으로 필수 인자로 두었다. 위 `F`/`1` 예시는 Kaggle에서 받은 대회 helper/명세로 확인한 뒤에만 사용한다. 확인되지 않은 값을 추측해 제출하지 않는다. 생성 코드는 sample submission의 행 순서와 파일명에 맞춰 결과를 만든다.
 
 ## 실험 계획
 
@@ -111,9 +127,10 @@ python -m lane_segmentation.evaluate --config configs/baseline.yaml --checkpoint
 ## 검증 현황 및 한계
 
 - 확인 완료: Python 3.12, PyTorch 2.11.0+cu128, RTX 4060 Laptop GPU.
-- 현재 코드 검증: `python -m pytest -q` 6개 통과. 합성 이미지 2 train / 2 validation으로 1 epoch GPU smoke test, checkpoint 저장/재로딩, 시각화 생성도 통과했다. 이는 실행 경로 검증이며 Kaggle 데이터 성능이 아니다.
+- 현재 코드 검증: `python -m pytest -q` 11개 통과. 합성 이미지 2 train / 2 validation으로 1 epoch GPU smoke test, checkpoint 저장/재로딩, 시각화 생성도 통과했다. 이는 실행 경로 검증이며 Kaggle 데이터 성능이 아니다.
 - Kaggle CLI 2.2.5의 파일 목록 조회는 API 인증정보 부재로 실패했다. 실제 Data 파일 목록과 개별 용량은 초대 계정으로 로그인하고 규칙에 동의한 뒤 확인해야 한다.
 - 현재 미완료: 제한 대회 초대, Kaggle 로그인/OAuth, 규칙 동의, 데이터 다운로드, 실제 파일/라벨 검사, 실제 학습과 validation, 제출 RLE 검증.
+- sample submission 형식의 CSV 생성기와 C/F ordering·0/1 기반 RLE round-trip 테스트를 구현했다. 실제 Kaggle sample/template와 mask를 확보하지 못해 대회 evaluator 호환성을 확인한 것은 아니다.
 - Kaggle 대회는 2025-06-22 종료되었다. 페이지에는 현재 초대 제한이 표시되며, 늦은 제출을 사용할 수 있다는 표시를 확인하지 못했다. 새 공식 점수는 보고하지 않는다.
 - 실패 사례, loss curve, 실험별 성능 표는 실제 데이터 평가가 끝난 뒤 추가한다.
 

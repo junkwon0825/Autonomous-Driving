@@ -9,6 +9,7 @@ from lane_segmentation.data import LaneSegmentationDataset, validate_split
 from lane_segmentation.inference import predict_image
 from lane_segmentation.metrics import binary_metrics, binary_metrics_from_counts, mean_image_dice
 from lane_segmentation.model import UNet
+from lane_segmentation.submission import encode_rle, generate_submission
 
 
 def create_pair(root, name, size=(64, 32)):
@@ -101,3 +102,50 @@ def test_inference_returns_original_image_size(tmp_path):
 
     assert prediction.shape == (40, 80)
     assert set(np.unique(prediction)).issubset({0, 1})
+
+
+@pytest.mark.parametrize("order", ("C", "F"))
+@pytest.mark.parametrize("index_base", (0, 1))
+def test_rle_round_trip(order, index_base):
+    mask = np.array([[0, 1, 1], [1, 0, 1]], dtype=np.uint8)
+    encoded = encode_rle(mask, order, index_base)
+    values = np.asarray(mask).ravel(order=order)
+    decoded = np.zeros_like(values)
+    runs = [int(value) for value in encoded.split()]
+    for start, length in zip(runs[::2], runs[1::2]):
+        start -= index_base
+        decoded[start : start + length] = 1
+
+    np.testing.assert_array_equal(decoded.reshape(mask.shape, order=order), mask)
+    assert encode_rle(np.zeros_like(mask), order, index_base) == "0"
+
+
+def test_submission_uses_template_order_and_rle(tmp_path):
+    class PositiveModel(torch.nn.Module):
+        def forward(self, inputs):
+            return torch.full((inputs.shape[0], 1, 8, 12), 10.0, device=inputs.device)
+
+    test_root = tmp_path / "test"
+    test_root.mkdir()
+    Image.new("RGB", (12, 8), (20, 30, 40)).save(test_root / "second.jpg")
+    Image.new("RGB", (12, 8), (40, 30, 20)).save(test_root / "first.jpg")
+    template = tmp_path / "sample_submission.csv"
+    template.write_text("filename,rle_mask\nsecond.jpg,0\nfirst.jpg,0\n", encoding="utf-8")
+    output = tmp_path / "submission.csv"
+
+    generate_submission(
+        PositiveModel(),
+        template,
+        test_root,
+        output,
+        image_size=(8, 12),
+        threshold=0.5,
+        device="cpu",
+        rle_order="C",
+        index_base=1,
+    )
+
+    with output.open("r", newline="", encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+    assert [row["filename"] for row in rows] == ["second.jpg", "first.jpg"]
+    assert all(row["rle_mask"] == "1 96" for row in rows)
