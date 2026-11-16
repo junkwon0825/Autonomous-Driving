@@ -17,7 +17,7 @@ MATLAB 기반 선형 Dynamic Bicycle Model과 Lateral/Heading PID 조향 제어�
 - Seven deterministic simulation scenarios
 - CSV metrics/time series, MATLAB plots, automated assertions
 
-현재 MATLAB 시뮬레이션 코드는 Simulink/Stateflow, 추가 Toolbox, OpenCV, Python 또는 Raspberry Pi/Arduino에 의존하지 않습니다. 학부 미니카 프로젝트는 README의 별도 섹션과 [원문 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)에 분리해 기록했습니다.
+현재 MATLAB 시뮬레이션 코드는 Simulink/Stateflow, 추가 Toolbox, OpenCV, Python 또는 Raspberry Pi/Arduino에 의존하지 않습니다. 학부 Raspberry Pi 5 미니카의 차선 인식·모터 제어 구성과 사진은 README 및 [미니카 프로젝트 기술 정리](mini-car-project.md)에 별도로 정리했습니다.
 
 ## 수행 역할
 
@@ -42,7 +42,7 @@ MATLAB 기반 선형 Dynamic Bicycle Model과 Lateral/Heading PID 조향 제어�
 
 ## 기술적 한계 및 프로젝트 배경
 
-학부 자동차 제어 과정의 LKA/Bicycle Model/PID 학습 경험을 배경으로 프로젝트를 구성했습니다. 현재 저장소의 모델과 실행 결과는 코드와 CSV로 확인 가능한 MATLAB 시뮬레이션 산출물입니다. Raspberry Pi 5 미니카의 Canny 차선 검출 및 GPIO 모터 제어 기록은 MATLAB 시뮬레이션과 분리된 과거 프로젝트입니다. 원본 Simulink/Stateflow 모델은 현재 MATLAB 구현의 일부가 아닙니다.
+학부 자동차 제어 과정의 LKA/Bicycle Model/PID 학습 경험과 별도 Raspberry Pi 5 미니카의 Canny 차선 검출/GPIO 모터 제어 경험을 포트폴리오에 정리했습니다. 현재 저장소의 MATLAB Dynamic Bicycle Model과 PID 시뮬레이션은 코드와 CSV로 검증 가능한 신규 결과이며, 두 프로젝트의 구현 및 결과를 구분했습니다. 원본 Simulink/Stateflow 모델은 현재 MATLAB 구현의 일부가 아닙니다.
 
 모델은 작은 타이어 슬립, 선형 코너링 강성, 양의 종방향 속도, 평탄한 도로를 가정합니다. 타이어 포화, steering actuator 동특성, 측정 지연은 포함하지 않습니다. 후보 차량 파라미터와 PID 게인의 원 단위/차축 기준은 [Design Report](design-report.md)에 가정으로 구분했습니다. MATLAB 모델과 미니카 사이의 정량 비교는 수행하지 않았습니다.
 

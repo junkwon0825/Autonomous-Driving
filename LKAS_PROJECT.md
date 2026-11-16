@@ -42,5 +42,5 @@
 ## 증빙 및 복원 범위
 
 - 과거 요약의 출처와 프로젝트 제목은 “Autonomous Driving Control System Design — Lane Keeping Assistant System”으로 적혀 있다. 발표 파일 자체는 현재 저장소에 없다.
-- 과거 미니카 사진/장비/당시 역할 기록은 [`lkas-control-mini-car/original/mini-car/`](lkas-control-mini-car/original/mini-car/)에 추가한다. 현재 내용은 증빙 안내만 있다.
+- Raspberry Pi 5 미니카의 사진과 확인된 차선 인식/모터 제어 구성은 [미니카 프로젝트 정리](lkas-control-mini-car/docs/mini-car-project.md) 및 [`lkas-control-mini-car/original/mini-car/`](lkas-control-mini-car/original/mini-car/)에 별도로 정리했다. 이 하드웨어 프로젝트와 MATLAB LKAS 시뮬레이션의 결과는 구분한다.
 - 새 MATLAB Dynamic Bicycle Model, PID, scenario, 그래프와 CSV는 현재 코드에 근거한 **신규 재구현/검증 자료**다. 원본 Simulink/Stateflow 복원 결과가 아니다.

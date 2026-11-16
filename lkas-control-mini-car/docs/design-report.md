@@ -8,7 +8,7 @@
 
 ## 1. 요약
 
-이 보고서는 저장소에 남아 있는 과거 LKAS 요약 기록을 바탕으로 구성한 MATLAB 참조 모델과 7개 시나리오 실행 결과를 정리한다. 학부 Raspberry Pi 5 미니카 프로젝트는 별도 블로그에 기록되어 있으며, 해당 하드웨어와 이 MATLAB 참조 모델을 연동하거나 정량 비교한 결과는 이 보고서에 포함하지 않는다.
+이 보고서는 저장소에 남아 있는 과거 LKAS 요약 기록을 바탕으로 구성한 MATLAB 참조 모델과 7개 시나리오 실행 결과를 정리한다. 학부 Raspberry Pi 5 미니카 프로젝트의 하드웨어, 영상 처리, 모터 제어 및 사진은 [미니카 프로젝트 기술 정리](mini-car-project.md)에 별도 기록했으며, 해당 하드웨어와 MATLAB 참조 모델을 연동하거나 정량 비교한 결과는 이 보고서에 포함하지 않는다.
 
 현재 구현은 MATLAB 함수 기반 선형 Dynamic Bicycle Model, 기록된 PID 숫자를 그대로 사용한다고 가정한 두 오차 PID 제어기, 조향 포화 및 조건부 적분 정지 로직으로 구성된다. 직선 복원, 곡선, 큰 초기 오차, 속도 램프, 측정 노이즈와 횡방향 외란, 방향지시등/차선 변경 상태, 무노이즈 비교 시나리오를 실행했다. Simulink와 Control System Toolbox가 설치되고 라이선스가 사용 가능함을 확인했지만, 본 실행 코드에는 추가 Toolbox가 필요하지 않다.
 
@@ -37,7 +37,7 @@
 | 자동 검증 | 완료 | 7개 시나리오 검사 통과 |
 | 설계·요구사항·추적 문서 | 완료 | 이 보고서 및 추적표 |
 | 과거 원본 Simulink/Stateflow 복원 | 미완료 | 원본 자료가 없음 |
-| MATLAB 참조 모델과 실시간 카메라/미니카 연동 | 미실시 | MATLAB 시뮬레이션과 분리된 미니카 활동은 [프로젝트 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)에 기록 |
+| MATLAB 참조 모델과 실시간 카메라/미니카 연동 | 미실시 | 별도 미니카 구현과 사진은 [미니카 프로젝트 기술 정리](mini-car-project.md)에 기록 |
 | MATLAB 모델 기준 미니카 정량 주행 시험 | 미실시 | MATLAB 모델과 연결된 추종 오차/지연 로그 미포함 |
 | Simulation-to-Real 비교 | 미실시 | 실측 로그 없음 |
 
@@ -60,7 +60,7 @@ linear Dynamic Bicycle Model → [v_y, yaw rate, e_y, e_psi]
                    CSV metrics / plots
 ```
 
-MATLAB 참조 모델에는 카메라 영상 입력, 영상 좌표 보정, 조향 servo 보정 및 모터 속도 제어가 없다. 별도 Raspberry Pi 5 미니카 기록의 Canny 차선 검출과 GPIO 기반 모터 제어는 [프로젝트 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)를 참조하며, 이 MATLAB 모델과 통합된 구현으로 간주하지 않는다.
+MATLAB 참조 모델에는 카메라 영상 입력, 영상 좌표 보정, 조향 servo 보정 및 모터 속도 제어가 없다. Raspberry Pi 5 미니카의 Canny 차선 검출 및 GPIO 기반 모터 제어는 [미니카 프로젝트 기술 정리](mini-car-project.md)에 기록했으며, 이 MATLAB 모델과는 별도 구현이다.
 
 ## 4. 차량 모델과 좌표계
 
@@ -188,6 +188,6 @@ run(fullfile(pwd, 'lkas-control-mini-car', 'tests', 'test_lkas_reference.m'));
 
 ## 9. 학부 미니카 기록
 
-학부 Raspberry Pi 5 미니카 프로젝트는 Picamera2 기반 입력, OpenCV Canny 차선 검출, 차선 중심 기반 방향 계산, GPIO PWM을 통한 4개 DC 모터의 좌우 속도 제어를 [프로젝트 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)에 기록했다. 관련 사진은 LKAS README에 수록했으며, Hailo-8L/YOLO segmentation은 블로그에서 검토·환경 설정 내용과 최종 알고리즘을 구분한다. 이 활동은 이번 MATLAB 참조 모델의 하드웨어 검증 결과가 아니다.
+학부 Raspberry Pi 5 미니카 프로젝트는 Picamera2 영상 입력, grayscale/Gaussian blur/Canny edge 처리, 차선 중심 및 정규화 편차 계산, deadband를 적용한 방향 명령, GPIO PWM으로 4개 DC 모터 좌우 속도를 조절하는 구성으로 정리했다. Hailo-8L/YOLO segmentation은 검토 및 환경 구성에 한정하고 최종 차선 추종 경로와 구분했다. 세부 사항과 사진은 [미니카 프로젝트 기술 정리](mini-car-project.md)에 있으며, 이 활동은 이번 MATLAB 참조 모델의 하드웨어 검증 결과가 아니다.
 
 ISO 26262 인증이나 양산 ADAS 수준 안전성을 주장하지 않는다. 이 MATLAB 보고서의 수치는 미니카 실측값이나 MATLAB-미니카 비교 결과가 아니다.

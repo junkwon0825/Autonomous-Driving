@@ -191,7 +191,7 @@ run(fullfile(pwd, 'lkas-control-mini-car', 'tests', 'test_lkas_reference.m'));
 
 ## 09. Undergraduate Mini-Car Project
 
-학부 미니카 프로젝트에서는 Raspberry Pi 5와 Picamera2 기반 영상 입력, OpenCV Canny Edge 차선 검출 및 차선 중심 기반 방향 계산, GPIO PWM으로 4개 DC 모터의 좌우 속도를 다르게 제어하는 구성을 기록했습니다. 아래 사진과 설명의 출처는 [프로젝트 원문 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)입니다.
+학부 미니카 프로젝트에서는 Raspberry Pi 5와 Picamera2 기반 영상 입력, OpenCV Canny Edge 차선 검출 및 차선 중심 기반 방향 계산, GPIO PWM으로 4개 DC 모터의 좌우 속도를 다르게 제어하는 구성을 구현했습니다. 세부 처리 순서와 제어 방식은 [미니카 프로젝트 기술 정리](docs/mini-car-project.md)에 정리했습니다.
 
 | 사진 | 확인 가능한 내용 |
 |---|---|
@@ -200,7 +200,7 @@ run(fullfile(pwd, 'lkas-control-mini-car', 'tests', 'test_lkas_reference.m'));
 | <img src="original/mini-car/03-lane-centerline-visualization.jpg" alt="차선 중심 기반 방향 시각화" width="340"> | 소형차 주행 장면, 차선 중심/방향 표시와 제어 코드 화면 |
 | <img src="original/mini-car/04-hailo-8l-setup.jpg" alt="Raspberry Pi 및 가속기 구성" width="420"> | Raspberry Pi 보드, 카메라 연결부와 확장 보드 구성 |
 
-블로그에는 Canny 기반 차선 검출과 좌우 모터 속도 차등 제어를 구현한 내용이 기록되어 있습니다. Hailo-8L을 이용한 YOLO segmentation은 환경을 검토한 단계로, 게시글은 최종 주행 알고리즘에 통합하지 않았다고 구분합니다. 사진은 블로그에 공개된 자료를 출처와 함께 보관한 것으로, MATLAB 시뮬레이션 결과와 별개의 프로젝트 기록입니다.
+Hailo-8L 기반 YOLO segmentation은 검토 및 환경 구성 단계였으며, Canny 기반 차선 인식이 최종 주행 경로에 사용되었습니다. 사진과 미니카 구현 기록은 MATLAB 시뮬레이션 결과와 구분합니다.
 
 ## 10. Technical Documentation
 
@@ -209,3 +209,4 @@ run(fullfile(pwd, 'lkas-control-mini-car', 'tests', 'test_lkas_reference.m'));
 - [Requirements & Traceability](docs/requirements-and-traceability.md) — 요구사항과 검증 근거
 - [Technical Interview](docs/technical-interview.md) — 코드·결과 기반 예상 질문
 - [Portfolio Summary](docs/portfolio-summary.md) — 이력서용 요약 및 1/3분 답변
+- [Mini-Car Project](docs/mini-car-project.md) — Raspberry Pi 5 차선 인식·모터 제어 기술 정리
