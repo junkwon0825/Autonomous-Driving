@@ -7,8 +7,9 @@ if ~exist(outputDirectory, 'dir')
     mkdir(outputDirectory);
 end
 
-result = lkas_reference_simulation();
-fprintf('Reference simulation (not original-model reproduction)\n');
+scenarios = lkas_scenarios();
+result = lkas_reference_simulation(scenarios(3));
+fprintf('Large-initial-offset reference case (not original-model reproduction)\n');
 fprintf('RMS lateral error: %.6f m\n', result.rmsLateralError);
 fprintf('Maximum absolute lateral error: %.6f m\n', result.maxAbsLateralError);
 fprintf('Maximum absolute heading error: %.6f rad\n', result.maxAbsHeadingError);

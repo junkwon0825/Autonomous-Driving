@@ -15,11 +15,6 @@ p.lateralPID = [4.0, 0.1, 0.2];   % [Kp, Ki, Kd], recorded values
 p.headingPID = [3.0, 0.1, 0.3];   % [Kp, Ki, Kd], recorded values
 p.recordedErrorGain = 6000;        % Recorded, application/units unknown; not applied.
 
-% Scenario choices for this independent reference simulation, not historical facts.
-p.speed = 10;                      % m/s, constant
-p.duration = 10;                   % s
-p.initialLateralError = 0.15;      % m, vehicle relative to straight reference
-p.initialHeadingError = 0.05;      % rad, vehicle heading relative to reference
-p.roadCurvature = 0;               % 1/m, straight reference
+% Numerical integration step for the new reference scenarios, not historical.
 p.integrationStep = 0.001;         % s, internal RK4 step
 end
