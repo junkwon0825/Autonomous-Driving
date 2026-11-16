@@ -6,7 +6,7 @@
 
 본 프로젝트는 MATLAB 환경에서 선형 Dynamic Bicycle Model을 기반으로 차량의 횡방향 거동을 모델링하고, Lateral/Heading Error를 이용한 이산 PID 조향 제어기를 구현한 프로젝트입니다. 직선, 곡선, 초기 위치 오차, 속도 변화, 외란 등 7개 주행 시나리오를 구성하여 차선 추종 성능과 조향 응답을 정량적으로 분석했습니다.
 
-> **구현 범위:** 동역학 모델, PID 제어, 포화 처리, 7개 시나리오 및 결과 데이터는 MATLAB 함수와 실행 산출물로 검증했습니다. 원본 Simulink/Stateflow 모델, 카메라 차선인식 및 실시간 미니카 제어는 구현 범위에 포함되지 않습니다.
+> **이번 MATLAB LKAS 구현 범위:** 동역학 모델, PID 제어, 포화 처리, 7개 시나리오 및 결과 데이터는 MATLAB 함수와 실행 산출물로 검증했습니다. 이 MATLAB 모델에는 Simulink/Stateflow, 카메라 입력 및 미니카 실시간 연동이 포함되지 않습니다. 별도 미니카 프로젝트는 아래 섹션에 기록합니다.
 
 ## 01. Project Overview
 
@@ -191,7 +191,16 @@ run(fullfile(pwd, 'lkas-control-mini-car', 'tests', 'test_lkas_reference.m'));
 
 ## 09. Undergraduate Mini-Car Project
 
-학부 미니카 경험은 당시 사진과 확인 가능한 작업 내용을 바탕으로 보조 기록에 정리합니다. 추후 실제 사진이 추가되면 사진에서 확인되는 부품, 작업, 본인의 역할을 캡션으로 보강합니다. [학부 미니카 증빙 위치](original/mini-car/README.md)
+학부 미니카 프로젝트에서는 Raspberry Pi 5와 Picamera2 기반 영상 입력, OpenCV Canny Edge 차선 검출 및 차선 중심 기반 방향 계산, GPIO PWM으로 4개 DC 모터의 좌우 속도를 다르게 제어하는 구성을 기록했습니다. 아래 사진과 설명의 출처는 [프로젝트 원문 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)입니다.
+
+| 사진 | 확인 가능한 내용 |
+|---|---|
+| <img src="original/mini-car/02-mini-car-hardware.jpg" alt="Raspberry Pi 기반 소형차 하드웨어" width="420"> | 소형 4륜 플랫폼과 Raspberry Pi 계열 보드, 카메라 리본 케이블 및 구동 하드웨어 |
+| <img src="original/mini-car/01-lane-detection-output.jpg" alt="Canny 차선 검출 화면" width="420"> | 입력 영상과 Canny edge 처리 결과를 나란히 표시한 차선 검출 화면 |
+| <img src="original/mini-car/03-lane-centerline-visualization.jpg" alt="차선 중심 기반 방향 시각화" width="340"> | 소형차 주행 장면, 차선 중심/방향 표시와 제어 코드 화면 |
+| <img src="original/mini-car/04-hailo-8l-setup.jpg" alt="Raspberry Pi 및 가속기 구성" width="420"> | Raspberry Pi 보드, 카메라 연결부와 확장 보드 구성 |
+
+블로그에는 Canny 기반 차선 검출과 좌우 모터 속도 차등 제어를 구현한 내용이 기록되어 있습니다. Hailo-8L을 이용한 YOLO segmentation은 환경을 검토한 단계로, 게시글은 최종 주행 알고리즘에 통합하지 않았다고 구분합니다. 사진은 블로그에 공개된 자료를 출처와 함께 보관한 것으로, MATLAB 시뮬레이션 결과와 별개의 프로젝트 기록입니다.
 
 ## 10. Technical Documentation
 
