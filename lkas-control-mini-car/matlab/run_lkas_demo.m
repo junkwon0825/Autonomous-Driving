@@ -43,6 +43,7 @@ ylabel('e_\psi (deg)');
 subplot(3, 1, 3);
 plot(result.time, result.steeringAngle * 180/pi);
 grid on;
+ylim([-35, 35]);
 ylabel('\delta (deg)');
 xlabel('Time (s)');
 pngPath = fullfile(outputDirectory, 'reference_simulation.png');

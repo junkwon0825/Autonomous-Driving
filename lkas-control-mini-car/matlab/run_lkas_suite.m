@@ -108,6 +108,9 @@ grid on;
 xlabel('Time (s)');
 ylabel(plotTitle);
 title(plotTitle);
+if position == 3
+    ylim([-35, 35]);
+end
 if position == 1
     names = cell(numel(results), 1);
     for k = 1:numel(results)
