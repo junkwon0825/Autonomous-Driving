@@ -1,0 +1,17 @@
+seed: 42
+device: auto
+image_size: [128, 256]
+data_root: data/raw/lanesegmentationchallenge
+train_manifest: data/processed/train_smoke.csv
+val_manifest: data/processed/val_smoke.csv
+mask_threshold: 127
+batch_size: 1
+num_workers: 0
+learning_rate: 0.001
+weight_decay: 0.0001
+epochs: 1
+early_stopping_patience: 1
+threshold: 0.5
+checkpoint_dir: experiments/kaggle-real-smoke
+log_file: metrics.csv
+loss_curve: results/figures/kaggle-real-smoke-loss.png
