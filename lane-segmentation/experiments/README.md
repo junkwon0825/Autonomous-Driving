@@ -26,7 +26,10 @@
 - 학습 epoch 6의 Dice 0.69826은 로그에만 있으며, checkpoint 선택 기준은 validation BCE이므로 best checkpoint epoch 3과 혼동하지 않는다.
 - Loss curve: `results/figures/kaggle-unet-bce-loss.png`
 - 전체 validation 지표, threshold sweep, 이미지별 점수와 best/failure 시각화: `results/predictions/kaggle-unet-bce/`
-- 실제 Kaggle 제출/점수: 수행하지 않음. 과거 Public Score `0.69166`과 직접 비교할 수 없다.
+- 제출 CSV: `data/submissions/submission_unet_bce.csv`, columns `filename,rle`, 2,782 rows. 데이터와 CSV는 Git에서 제외한다.
+- Kaggle 제출 결과: 사용자가 공유한 Submissions 화면에서 `submission_unet_bce.csv` 상태 `Complete (after deadline)`, Public `0.75676`, Private `0.75864` 확인 (2026-11-16).
+- 사용자의 과거 제출은 Public `0.69166`, Private `0.69043`으로 표시됐다. 새 제출 대비 Public `+0.06510`, Private `+0.06821`. 대회 마감 후 평가된 점수이며 최종 순위/수상 결과를 뜻하지 않는다.
+- Kaggle 평가 점수와 validation 지표는 서로 다른 평가 집합/절차이므로 직접 비교하지 않는다. Kaggle 결과는 사용자가 공유한 화면을 근거로 기록했으며 API 검증은 하지 않았다.
 
 재현 명령:
 

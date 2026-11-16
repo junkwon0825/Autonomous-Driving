@@ -64,9 +64,12 @@ def generate_submission(
     index_base,
     legacy_template=None,
     legacy_output_path=None,
+    output_format="template",
 ):
     if not 0 < threshold < 1:
         raise ValueError("Prediction threshold must be within (0, 1)")
+    if output_format not in ("template", "filename-rle"):
+        raise ValueError("output_format must be 'template' or 'filename-rle'")
     fieldnames, filename_column, mask_column, rows = _read_template(sample_submission)
     if (legacy_template is None) != (legacy_output_path is None):
         raise ValueError("legacy_template and legacy_output_path must be provided together")
@@ -106,7 +109,14 @@ def generate_submission(
             writer.writerows(output_rows)
         return path
 
-    output_path = write_submission(output_path, fieldnames, predictions)
+    if output_format == "filename-rle":
+        output_rows = [
+            {"filename": row[filename_column], "rle": row[mask_column]}
+            for row in predictions
+        ]
+        output_path = write_submission(output_path, ("filename", "rle"), output_rows)
+    else:
+        output_path = write_submission(output_path, fieldnames, predictions)
     if legacy is not None:
         write_submission(legacy_output_path, legacy[0], legacy[3])
     return output_path
@@ -120,6 +130,7 @@ def main():
     parser.add_argument("--test-root", required=True)
     parser.add_argument("--output", default="data/submissions/submission.csv")
     parser.add_argument("--threshold", type=float)
+    parser.add_argument("--output-format", choices=("template", "filename-rle"), default="template")
     parser.add_argument("--legacy-template")
     parser.add_argument("--legacy-output")
     parser.add_argument("--rle-order", choices=("C", "F"), required=True)
@@ -145,6 +156,7 @@ def main():
         index_base=args.index_base,
         legacy_template=resolve(args.legacy_template) if args.legacy_template else None,
         legacy_output_path=resolve(args.legacy_output) if args.legacy_output else None,
+        output_format=args.output_format,
     )
     print(f"Submission saved: {output_path}")
     if args.legacy_output:

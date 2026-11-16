@@ -275,3 +275,34 @@ def test_submission_supports_historical_filename_rle_template(tmp_path):
     with output.open("r", newline="", encoding="utf-8") as file:
         rows = list(csv.DictReader(file))
     assert rows == [{"filename": "frame.jpg", "rle": "1 96"}]
+
+
+def test_submission_can_emit_required_filename_rle_schema_from_official_template(tmp_path):
+    class PositiveModel(torch.nn.Module):
+        def forward(self, inputs):
+            return torch.full((inputs.shape[0], 1, 8, 12), 10.0, device=inputs.device)
+
+    test_root = tmp_path / "test"
+    test_root.mkdir()
+    Image.new("RGB", (12, 8)).save(test_root / "frame.jpg")
+    template = tmp_path / "sample_submission.csv"
+    template.write_text("image_id,encoded_pixels\nframe.jpg,\n", encoding="utf-8")
+    output = tmp_path / "submission.csv"
+
+    generate_submission(
+        PositiveModel(),
+        template,
+        test_root,
+        output,
+        image_size=(8, 12),
+        threshold=0.5,
+        device="cpu",
+        rle_order="C",
+        index_base=1,
+        output_format="filename-rle",
+    )
+
+    with output.open("r", newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        assert reader.fieldnames == ["filename", "rle"]
+        assert list(reader) == [{"filename": "frame.jpg", "rle": "1 96"}]
