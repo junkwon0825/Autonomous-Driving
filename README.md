@@ -50,6 +50,8 @@ MATLAB/Simulink·Stateflow 기반 LKA 제어 프로젝트에서 Bicycle Model과
 
 프로젝트 근거: [LKAS_PROJECT.md](LKAS_PROJECT.md)
 
+프로젝트 복원 근거와 원본 자료 현황, MATLAB 재현용 최소 시뮬레이션은 [lkas-control-mini-car](lkas-control-mini-car/README.md)에서 별도로 관리합니다. 원본 모델과 실제 미니카 실험은 자료 및 장비가 확보되기 전까지 미검증/미구현으로 표시합니다.
+
 ## Learning Roadmap
 
 다음 순서로 실제 코드가 완성될 때마다 저장소에 추가합니다.
