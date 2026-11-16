@@ -40,6 +40,8 @@ MATLAB 기반 선형 Dynamic Bicycle Model과 Lateral/Heading PID 조향 제어�
 
 위 성과는 지정된 MATLAB 모델 및 deterministic 입력 조건에서 산출된 시뮬레이션 결과입니다.
 
+자동차 SW 프로세스 학습과 LKAS 요구사항-시험 추적성 적용은 [Automotive Software Engineering 학습 및 적용](../../docs/automotive-software-engineering.md)에 별도로 정리했습니다.
+
 ## 기술적 한계 및 프로젝트 배경
 
 학부 자동차 제어 과정의 LKA/Bicycle Model/PID 학습 경험과 별도 Raspberry Pi 5 미니카의 Canny 차선 검출/GPIO 모터 제어 경험을 포트폴리오에 정리했습니다. 현재 저장소의 MATLAB Dynamic Bicycle Model과 PID 시뮬레이션은 코드와 CSV로 검증 가능한 신규 결과이며, 두 프로젝트의 구현 및 결과를 구분했습니다. 원본 Simulink/Stateflow 모델은 현재 MATLAB 구현의 일부가 아닙니다.

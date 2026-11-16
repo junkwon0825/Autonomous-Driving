@@ -210,3 +210,4 @@ Hailo-8L 기반 YOLO segmentation은 검토 및 환경 구성 단계였으며, C
 - [Technical Interview](docs/technical-interview.md) — 코드·결과 기반 예상 질문
 - [Portfolio Summary](docs/portfolio-summary.md) — 이력서용 요약 및 1/3분 답변
 - [Mini-Car Project](docs/mini-car-project.md) — Raspberry Pi 5 차선 인식·모터 제어 기술 정리
+- [Automotive Software Engineering](../docs/automotive-software-engineering.md) — V-Model, ISO 26262 기초, 요구사항 및 V&V 학습 정리

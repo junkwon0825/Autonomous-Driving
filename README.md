@@ -52,6 +52,14 @@ MATLAB 기반 Dynamic Bicycle Model과 PID 조향 제어 시스템을 구현하�
 
 프로젝트: [Lane Keeping Assist System (LKAS)](lkas-control-mini-car/README.md) · [학부 LKAS 기록](LKAS_PROJECT.md) · [Raspberry Pi 5 미니카 프로젝트 정리](lkas-control-mini-car/docs/mini-car-project.md)
 
+### 4. Automotive Software Engineering
+
+ISO 26262와 V-Model의 기초, 요구사항 관리, 추적성, Verification/Validation 개념을 학습 노트로 정리하고 LKAS 및 Lane Segmentation 프로젝트의 실제 산출물과 연결했습니다. 이는 자동차 SW 개발 프로세스에 대한 학습·적용 사례이며, ISO 26262 준수나 인증을 의미하지 않습니다.
+
+**포트폴리오 역량:** LKAS는 제어 · Lane Segmentation은 인지 AI · Automotive Software Engineering은 자동차 SW 개발 프로세스 이해를 보여줍니다.
+
+정리 문서: [Automotive Software Engineering 학습 및 적용](docs/automotive-software-engineering.md) · [Lane Segmentation](lane-segmentation/README.md) · [LKAS 요구사항·시험 추적성](lkas-control-mini-car/docs/requirements-and-traceability.md)
+
 ## Learning Roadmap
 
 다음 순서로 실제 코드가 완성될 때마다 저장소에 추가합니다.
