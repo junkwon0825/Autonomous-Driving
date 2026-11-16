@@ -1,50 +1,67 @@
-# LKAS Control | MATLAB Simulation Portfolio
+# Lane Keeping Assist System (LKAS)
 
-학부 시절의 차량 제어 학습 기록을 출발점으로 삼아 **MATLAB 함수 기반 차량 횡방향 제어 시뮬레이션을 새로 구현하고 검증**한 포트폴리오입니다.
+### Vehicle Dynamics Modeling & PID Steering Control
 
-> **구현 범위:** 이 저장소의 Dynamic Bicycle Model, PID 구현, 7개 시나리오와 수치는 모두 현재 MATLAB 코드로 재현되는 결과입니다. 학부 원본 `.slx`/Stateflow/코드가 제공되지 않아 원본 시스템의 완전한 복원이나 동일성은 주장하지 않습니다. Simulink 모델, 실제 카메라·미니카 폐루프 제어, 실물 주행 시험은 구현/수행하지 않았습니다.
+**MATLAB 기반 차량 횡방향 동역학 모델링 및 차선 유지 조향 제어 시스템**
+
+본 프로젝트는 MATLAB 환경에서 선형 Dynamic Bicycle Model을 기반으로 차량의 횡방향 거동을 모델링하고, Lateral/Heading Error를 이용한 이산 PID 조향 제어기를 구현한 프로젝트입니다. 직선, 곡선, 초기 위치 오차, 속도 변화, 외란 등 7개 주행 시나리오를 구성하여 차선 추종 성능과 조향 응답을 정량적으로 분석했습니다.
+
+> **구현 범위:** 동역학 모델, PID 제어, 포화 처리, 7개 시나리오 및 결과 데이터는 MATLAB 함수와 실행 산출물로 검증했습니다. 원본 Simulink/Stateflow 모델, 카메라 차선인식 및 실시간 미니카 제어는 구현 범위에 포함되지 않습니다.
 
 ## 01. Project Overview
 
-자동차 제어 학습 과정에서 다룬 차체 횡방향 동역학, Lateral/Heading Error, PID 기반 조향 개념을 실제 실행 가능한 MATLAB 모델로 다시 구성했습니다. 목적은 과거 활동 기록과 현재 새로 구현한 작업을 구분하고, 수식·가정·코드·시험 데이터를 함께 검토할 수 있도록 정리하는 것입니다.
+### 개발 배경 및 목표
 
-| 구분 | 확인 가능한 범위 |
-|---|---|
-| 학부 시절 기록 | 저장소의 [`LKAS_PROJECT.md`](../LKAS_PROJECT.md)에 LKA, Bicycle Model, Lateral/Yaw PID 등의 경험이 요약되어 있음. 원본 모델/발표자료는 현재 저장소에 없음. |
-| 현재 신규 구현 | MATLAB Dynamic Bicycle Model, P/I/D 항을 포함한 두 오차 PID 루프, 조향 포화 및 조건부 적분 정지, 7개 결정론적 가상 시나리오, 지표/CSV/그래프/자동 검사. |
-| 구현하지 않은 범위 | 원본 Simulink/Stateflow 모델 복원, 새 Simulink 모델, Raspberry Pi/Arduino 통합, 카메라 인식, 실물 폐루프 주행 및 실측 성능. |
+학부 자동차 제어 학습에서 다룬 LKA, Bicycle Model, 횡방향/Yaw 제어 개념을 바탕으로 차량 거동과 조향 응답을 독립적으로 분석할 수 있는 MATLAB 시뮬레이션을 구성했습니다. 설계 수식, 구현 코드, 시험 조건과 정량 결과가 서로 추적되도록 정리하는 것이 목표입니다.
+
+### 기술 스택
+
+`MATLAB R2016a` · Linear Dynamic Bicycle Model · Discrete PID · RK4 · CSV · MATLAB Plot · Automated Assertions
+
+### 주요 기능
+
+- 선형 타이어 코너링 강성을 이용한 차량 횡방향·요 동역학 모델
+- Lateral/Heading Error 기반의 이산 P/I/D 제어 루프
+- 조향 명령 포화 및 Conditional Integration Anti-Windup
+- 직선·곡률·초기 오차·속도 ramp·노이즈/외란·차선 변경 등 7개 시나리오
+- RMS/최대 오차, yaw response, steering response 및 CSV/그래프 산출
+- 시나리오 자동 검사와 저장 결과 간 수치 일관성 검증
 
 ## 02. System Architecture
 
 ```mermaid
 flowchart LR
-    REF["기준 경로<br/>곡률·속도·차선 변경"] --> ERR["모델 상태 기반 오차<br/>e_y, e_psi"]
-    ERR --> PID["Lateral PID + Heading PID<br/>P / I / D"]
-    PID --> SAT["조향 명령 포화<br/>±30° (가정)"]
-    SAT --> PLANT["선형 Dynamic Bicycle Model"]
-    PLANT --> STATE["v_y, yaw rate, e_y, e_psi"]
-    STATE --> ERR
-    STATE --> LOG["CSV 지표·시계열·그래프"]
+    REF["Reference Path<br/>curvature, speed, lane-change profile"] --> ERROR["Lateral / Heading Error<br/>e_y, e_psi"]
+    ERROR --> PID["Discrete PID Controller<br/>Lateral + Heading"]
+    PID --> SAT["Steering Saturation<br/>±30 deg"]
+    SAT --> VEHICLE["Linear Dynamic Bicycle Model"]
+    VEHICLE --> STATE["Vehicle State<br/>v_y, yaw rate, e_y, e_psi"]
+    STATE --> ERROR
+    STATE --> METRICS["Scenario Metrics<br/>CSV / plots"]
 ```
 
-![MATLAB LKAS scenario comparison](results/simulation/scenario_comparison.png)
+![7개 MATLAB 시뮬레이션 시나리오의 횡오차·헤딩오차·조향·속도 비교](results/simulation/scenario_comparison.png)
 
-![Large initial-offset case: lateral error, heading error, steering response](results/simulation/reference_simulation.png)
+![큰 초기 위치 오차 조건의 MATLAB 시뮬레이션 응답](results/simulation/reference_simulation.png)
 
-실제 제어 입력은 MATLAB 시나리오의 속도·곡률·초기 조건 및 인위적으로 설정한 오차/외란입니다. 카메라 영상에서 차선을 검출하는 입력 경로는 구현하지 않았습니다.
+오차 피드백은 카메라가 아니라 차량 모델의 상태에서 계산됩니다. Lane-change case는 기준 경로와 제어 상태를 정의한 가상 시나리오입니다.
 
-## 03. Vehicle Dynamics
+## 03. Vehicle Dynamics Modeling
 
-구현은 **Kinematic Bicycle Model이 아니라 선형 Dynamic Bicycle Model**입니다. 전륜/후륜의 선형 코너링 힘을 이용해 차체 횡속도와 요레이트 동역학을 계산합니다.
+구현 모델은 **Kinematic Bicycle Model이 아닌 선형 Dynamic Bicycle Model**입니다. 전·후륜 선형 타이어 횡력을 통해 횡속도와 yaw rate의 동역학을 계산합니다.
 
-상태와 부호:
+### 상태와 좌표계
 
-- `v_y [m/s]`: 차체 좌표계 횡속도
-- `r [rad/s]`: 반시계 방향 yaw rate
-- `e_y [m]`: 기준 경로 왼쪽 방향 양수인 횡방향 추종 오차
-- `e_psi [rad]`: 차량 heading − 기준 경로 heading
-- `delta [rad]`: 좌회전 양수로 가정한 **전륜 road-wheel 조향각**
-- `v_x [m/s]`: 양수 종방향 속도, 시나리오에서 매 제어주기마다 갱신
+| 변수 | 단위 | 정의 및 부호 |
+|---|---|---|
+| `v_y` | m/s | 차량 차체 좌표계의 횡속도 |
+| `r` | rad/s | 반시계 방향 양수 yaw rate |
+| `e_y` | m | 기준 경로 왼쪽 방향 양수 횡방향 오차 |
+| `e_psi` | rad | 차량 heading − 기준 경로 heading |
+| `delta` | rad | 좌회전 양수로 가정한 전륜 road-wheel 조향각 |
+| `v_x` | m/s | 양수 종방향 속도 |
+
+### 동역학 방정식
 
 ```text
 alpha_f = delta - (v_y + a r) / v_x
@@ -58,127 +75,128 @@ e_y_dot   = v_y + v_x e_psi
 e_psi_dot = r - v_x kappa
 ```
 
-차량 동역학은 제어주기 0.1 s 동안 0.001 s 간격의 RK4 적분으로 계산합니다. 소각도·소슬립, 선형 타이어, 평탄한 도로를 가정합니다. 타이어 포화, roll, 하중 이동, 실제 steering actuator, 영상/통신 지연은 모델링하지 않았습니다.
+`m`은 질량, `I_z`는 yaw 관성, `a/b`는 CG에서 전/후륜 축까지의 거리, `C_f/C_r`는 전/후륜 코너링 강성, `kappa`는 기준 경로 곡률입니다. 차량 동역학은 제어 주기 사이를 1 ms 고정 간격 RK4로 적분합니다.
 
-| 파라미터 | 값 | 단위 | 출처/해석 |
+| 파라미터 | 값 | 단위 | 모델 적용 |
 |---|---:|---|---|
-| `m` | 2045 | kg | 기존 LKAS 요약 기록; 원본 대조 전 |
-| `I_z` | 5428 | kg·m² | 기존 LKAS 요약 기록; 원본 대조 전 |
-| `a`, `b` | 1.488, 1.712 | m | CG에서 각 축 거리로 기록됨 |
-| `C_f`, `C_r` | 38925, 38255 | N/rad 가정 | 차축 합산값으로 신규 모델에서 해석 |
-| `T_s` | 0.1 | s | 기록된 0.1 s를 제어주기로 가정 |
-| 조향 제한 | ±30 | deg | 전륜 road-wheel 각으로 가정 |
+| Vehicle mass `m` | 2045 | kg | 후보 차량 파라미터 |
+| Yaw inertia `I_z` | 5428 | kg·m² | 후보 차량 파라미터 |
+| CG to front/rear axle `a/b` | 1.488 / 1.712 | m | wheelbase 합 3.2 m |
+| Front/Rear cornering stiffness `C_f/C_r` | 38925 / 38255 | N/rad 가정 | 차축 합산값으로 해석 |
+| Controller sample time `T_s` | 0.1 | s | 제어 갱신 간격 |
+| Maximum steering angle | ±30 | deg | 전륜 road-wheel angle 가정 |
 
-Cornering stiffness의 타이어/차축 기준, 기록된 0.1 s의 의미, 조향각의 기준점은 원본 자료가 없어 확인되지 않았습니다. 자세한 모델 유도와 한계는 [설계·시뮬레이션 보고서](docs/design-report.md)를 참고하세요.
+코너링 강성의 축/타이어 기준과 기록된 0.1 s, 30° 파라미터의 실제 의미는 [설계 보고서](docs/design-report.md)에 명시한 모델링 가정으로 다룹니다. 선형 타이어·소슬립·평탄한 도로를 가정하며 타이어 포화와 액추에이터 동특성은 포함하지 않습니다.
 
-## 04. Control Algorithm
+## 04. PID Steering Controller
 
-코드는 `matlab/lkas_reference_simulation.m`에서 두 개의 이산 PID 출력을 합산해 단일 조향 명령을 생성합니다. **P/I/D 세 항을 모두 계산**하며, 별도의 feed-forward 항이나 D 필터는 없습니다.
+Lateral Error 및 Heading Error에 각각 이산 PID를 적용한 뒤 두 출력을 합산하여 조향 명령을 생성합니다. 코드에서 P/I/D 세 항을 모두 계산합니다.
 
 ```text
 u_y   = Kp_y e_y + Ki_y ∫e_y dt + Kd_y d(e_y)/dt
 u_psi = Kp_psi e_psi + Ki_psi ∫e_psi dt + Kd_psi d(e_psi)/dt
-delta = clip(-(u_y + u_psi), -30°, +30°)
+delta = clip(-(u_y + u_psi), -delta_max, +delta_max)
+delta_max = 30 deg
 ```
 
-각 오차는 0.1 s마다 샘플링되고, 미분은 측정 오차의 후진 차분입니다. 조향 출력이 포화된 상태에서 두 적분항의 합이 포화를 더 키우는 방향이면 해당 주기의 적분 갱신을 보류합니다(conditional integration).
+| 제어 루프 | `Kp` | `Ki` | `Kd` |
+|---|---:|---:|---:|
+| Lateral Error PID | 4.0 | 0.1 | 0.2 |
+| Heading Error PID | 3.0 | 0.1 | 0.3 |
 
-| 루프 | `Kp, Ki, Kd` | 값의 상태 |
+각 제어 루프는 `T_s = 0.1 s`로 갱신하며, 미분은 측정 오차의 후진 차분입니다. 조향 출력 포화를 더 키우는 방향으로 두 적분항이 변할 때 해당 주기의 적분 갱신을 보류하는 Conditional Integration 로직을 적용했습니다. 게인의 단위와 실제 전륜각으로 변환되는 계수는 확인된 기록이 없으므로 제어 응답은 구현 모델 내 비교로 해석합니다.
+
+## 05. Simulation Scenarios
+
+7개 시나리오 모두 10초·101 제어 샘플을 사용합니다. 아래 성능은 MATLAB 모델에서 생성된 값이며 물리 차량의 측정값이 아닙니다.
+
+| 시나리오 | 입력 조건 | 시험 목적 | RMS `e_y` (m) | 주요 결과 |
+|---|---|---|---:|---|
+| `straight_recovery` | 10 m/s; `e_y=+0.02 m`, `e_psi=+0.01 rad` | 작은 직선 오차 복원 | 0.003795 | 최대 `|e_y|` 0.020486 m; 정착 0.2 s |
+| `constant_curve` | 10 m/s; `kappa=0.003 1/m`; 초기 `+0.05 m/+0.02 rad` | 일정 곡률 추종 | 0.009925 | 최대 `|e_y|` 0.050000 m; 최대 `|delta|` 18.814° |
+| `initial_offset` | 10 m/s; `e_y=+0.15 m`, `e_psi=+0.05 rad` | 큰 초기 오차 복구/포화 | 0.025533 | 최대 `|e_y|` 0.154836 m; 포화 4/101; 정착 1.9 s |
+| `speed_ramp` | 속도 7→15 m/s/10 s; 초기 `+0.05 m/+0.02 rad` | 속도 변화 응답 | 0.007267 | 최대 `|delta|` 14.937°; 정착 0.2 s |
+| `sensor_noise_and_disturbance` | 초기 `+0.05 m/+0.02 rad`; 측정 노이즈 `0.01 m/0.003 rad`, 외란 300 N | 측정 오차/횡외란 영향 | 0.025009 | 최대 `|r|` 0.436017 rad/s; 2 cm 정착 미달 |
+| `turn_signal_lane_change` | 10 m/s; 3.5 m 차로 간 reference 이동, turn signal | 차선 변경 reference 추종/state 출력 | 0.008401 | 최대 `|e_y|` 0.019469 m; 포화 0 |
+| `sensor_noise_baseline` | noisy case와 같은 초기조건; 노이즈/외란 제거 | baseline 비교 | 0.008993 | 최대 `|e_y|` 0.050000 m; 정착 1.0 s |
+
+상세 시나리오 조건은 [Simulation Scenarios](simulation/scenarios.md), 전체 지표는 [scenario_metrics.csv](results/simulation/scenario_metrics.csv)를 참조하세요.
+
+## 06. Experimental Results
+
+**MATLAB R2016a 시뮬레이션에서 생성한 수치 결과**입니다. 각 값은 CSV와 자동 검사로 확인했습니다.
+
+| 분석 조건 | 정량 결과 | 해석 |
 |---|---|---|
-| Lateral Error | 4.0, 0.1, 0.2 | 기존 요약 문서에 기록. 단위/원본 블록 미확인. |
-| Heading Error | 3.0, 0.1, 0.3 | 기존 요약 문서에 기록. 단위/원본 블록 미확인. |
+| 직선 초기 오차 복원 | RMS Lateral Error **0.003795 m**; max absolute **0.020486 m** | 작은 초기 오차를 기준 경로 주변으로 줄임 |
+| 큰 초기 위치 오차 | max absolute Lateral Error **0.154836 m**; 최대 조향 **30.000°** | 조향 포화가 4/101 samples 발생 |
+| 일정 곡률 | RMS Lateral Error **0.009925 m**; max steering **18.814°** | `0.003 1/m` curvature 입력 추종 |
+| 속도 ramp | RMS Lateral Error **0.007267 m**; yaw-rate 최대 **0.256826 rad/s** | 7→15 m/s 단일 ramp case |
+| 노이즈·외란 | RMS Lateral Error **0.025009 m** | noisy/disturbed case에서 0.02 m 정착 기준을 만족하지 못함 |
+| 노이즈 없는 비교 | RMS Lateral Error **0.008993 m** | noisy/disturbed case와 초기조건이 동일한 비교 기준 |
+| 차선 변경 reference | max absolute tracking error **0.019469 m** | 이상적인 모델 내부 reference 추종 결과 |
 
-두 출력이 조향각 단위와 어떻게 스케일되는지는 원본에서 확인되지 않았습니다. 그래서 성능은 오직 명시된 신규 모델의 출력으로만 해석하며 실제 차량 성능으로 일반화하지 않습니다. `Error gain = 6000` 기록은 적용 위치와 단위가 불명확하여 사용하지 않았습니다.
+시나리오 비교의 조향 응답은 전륜각 가정 기준 ±30° 제한을 표시합니다. 노이즈와 횡방향 외란을 동시에 적용했으므로 두 영향은 분리되지 않았습니다. 모든 결과는 모델 기반 수치이며 실차 검증 성능으로 해석하지 않습니다.
 
-## 05. MATLAB Simulation
+- [Scenario metrics CSV](results/simulation/scenario_metrics.csv)
+- [Full scenario time-series CSV](results/simulation/scenario_timeseries.csv)
+- [Large-offset reference time-series CSV](results/simulation/reference_simulation.csv)
+- [Scenario comparison graph](results/simulation/scenario_comparison.png)
+- [Large-offset tracking/steering graph](results/simulation/reference_simulation.png)
 
-- MATLAB R2016a (9.0.0.341360), Windows
-- 본 시뮬레이션 코드 실행 및 테스트에 Simulink/Stateflow/추가 Toolbox 불필요
-- 환경 점검 시 Simulink와 Control System Toolbox 제품/라이선스 사용 가능 상태 확인
-- 총 7개 결정론적 시나리오, 각 10초·101 제어 샘플
-- 각 시나리오 입력과 결과 해석: [시나리오 요약](simulation/scenarios.md)
+## 07. Engineering Analysis
 
-저장소 루트에서 실행:
+### PID Gain 변화
+
+`Kp`는 현재 오차에 대한 조향 민감도, `Ki`는 누적 오차 보정 및 포화 시 windup, `Kd`는 오차 변화율 감쇠에 영향을 줍니다. 이번 결과에는 gain sweep이 포함되지 않으므로 게인 변화량별 정량 응답은 제시하지 않습니다.
+
+### 큰 초기 오차와 조향 포화
+
+큰 초기 조건 `e_y=+0.15 m`, `e_psi=+0.05 rad`에서 합산 PID 명령이 ±30° 한계를 넘어 4개 제어 샘플 동안 포화됐습니다. 이는 출력 범위 제한과 포화 시 적분 갱신 보류 로직이 필요한 사례입니다.
+
+### 외란·측정 노이즈
+
+노이즈와 300 N 횡방향 사인 외란을 함께 적용한 시나리오의 RMS 오차는 0.025009 m로, 같은 초기조건의 무노이즈 비교 0.008993 m보다 컸습니다. 결정론적 입력 1개에 대한 모델 결과이며 noise-only/disturbance-only 시험은 아닙니다.
+
+### 속도 변화와 모델 적용 범위
+
+7→15 m/s 속도 ramp case의 RMS 오차는 0.007267 m입니다. 한 가지 선형 속도 ramp만 시험했으므로 속도 전체 범위의 안정성이나 한계 속도를 의미하지 않습니다. 모델은 선형 타이어, 소슬립, 양의 종방향 속도와 평탄한 도로를 가정하며 tire saturation, steering actuator, 실제 센서 latency를 모델링하지 않습니다.
+
+## 08. Implementation & Reproducibility
+
+- **환경:** MATLAB R2016a (9.0.0.341360), Windows
+- **필수 Toolbox:** 추가 Toolbox 불필요; base MATLAB 함수 사용
+- **결과 생성:** 저장소 루트에서 아래 명령 실행
 
 ```matlab
 addpath(fullfile(pwd, 'lkas-control-mini-car', 'matlab'));
 run_lkas_suite
 ```
 
-자동 테스트 및 CSV/그래프 일관성 검사:
+7개 시나리오, 저장 CSV 수치, baseline 로그 일치 및 그래프 생성 검증:
 
 ```matlab
 run(fullfile(pwd, 'lkas-control-mini-car', 'tests', 'test_lkas_reference.m'));
 ```
 
-## 06. Results
+| 파일 | 역할 |
+|---|---|
+| `matlab/lkas_reference_parameters.m` | 후보 차량/제어 파라미터 |
+| `matlab/lkas_reference_simulation.m` | 동역학, PID, saturation, 시나리오 단위 실행 |
+| `matlab/lkas_scenarios.m` | 7개 입력 조건 |
+| `matlab/run_lkas_suite.m` | 결과 지표/전체 시계열/비교 그래프 출력 |
+| `matlab/run_lkas_demo.m` | 큰 초기 오차 case 결과 생성 |
+| `tests/test_lkas_reference.m` | 7개 시나리오 및 CSV/그래프 검사 |
+| `results/simulation/` | CSV 및 PNG 산출물 |
 
-아래 수치는 MATLAB 실행으로 생성한 CSV에서 가져온 **시뮬레이션 값**입니다. 헤딩/요/조향 최대치는 각 시나리오의 절대 최대값입니다. 추종 오차는 차량 모델 내부 상태이며 영상으로 측정한 차선 오차가 아닙니다.
+## 09. Undergraduate Mini-Car Project
 
-| 시나리오 | 초기 조건/입력 | RMS `e_y` (m) | max `|e_y|` (m) | max `|e_psi|` (rad) | max `|r|` (rad/s) | max `|delta|` (deg) | 포화 샘플 | 정착시간 (s) |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| 직선 복원 | 10 m/s; `e_y=0.02 m`, `e_psi=0.01 rad` | 0.003795 | 0.020486 | 0.016778 | 0.143757 | 7.491 | 0 | 0.2 |
-| 일정 곡률 | 10 m/s; `kappa=0.003 1/m`; 초기 `0.05 m`, `0.02 rad` | 0.009925 | 0.050000 | 0.043502 | 0.300134 | 18.814 | 0 | 1.0 |
-| 큰 초기 오차 | 10 m/s; `e_y=0.15 m`, `e_psi=0.05 rad` | 0.025533 | 0.154836 | 0.111653 | 0.804166 | 30.000 | 4 | 1.9 |
-| 속도 변화 | 7→15 m/s/10 s; 초기 `0.05 m`, `0.02 rad` | 0.007267 | 0.050000 | 0.029615 | 0.256826 | 14.937 | 0 | 0.2 |
-| 노이즈+외란 | 노이즈 `0.01 m/0.003 rad`, 외란 `300 N` | 0.025009 | 0.050000 | 0.046173 | 0.436017 | 23.829 | 0 | 미정착 |
-| 차선 변경 예시 | 10 m/s; 3.5 m 기준경로 이동, turn signal | 0.008401 | 0.019469 | 0.019602 | 0.171029 | 4.384 | 0 | 해당 없음 |
-| 노이즈 없는 비교 | 노이즈/외란 없음; noisy case와 같은 초기조건 | 0.008993 | 0.050000 | 0.039683 | 0.320051 | 17.432 | 0 | 1.0 |
+학부 미니카 경험은 당시 사진과 확인 가능한 작업 내용을 바탕으로 보조 기록에 정리합니다. 추후 실제 사진이 추가되면 사진에서 확인되는 부품, 작업, 본인의 역할을 캡션으로 보강합니다. [학부 미니카 증빙 위치](original/mini-car/README.md)
 
-정착시간은 `|e_y| <= 0.02 m`가 이후 끝까지 유지되는 첫 시점입니다. 차선 변경은 회복 정착시간으로 해석할 수 없어 해당 없으며, 노이즈+외란 시나리오는 종료 시점까지 기준을 만족하지 않아 미정착입니다. Overshoot 정의 등은 [보고서의 지표 정의](docs/design-report.md#6-실험-조건과-측정-지표)를 확인하세요.
+## 10. Technical Documentation
 
-결과 파일:
-
-- [전체 지표 CSV](results/simulation/scenario_metrics.csv)
-- [7개 시나리오 시계열 CSV](results/simulation/scenario_timeseries.csv)
-- [큰 초기 오차 로그 CSV](results/simulation/reference_simulation.csv)
-- [시나리오 비교 그래프](results/simulation/scenario_comparison.png)
-- [큰 초기 오차 추종/조향 그래프](results/simulation/reference_simulation.png)
-
-노이즈와 횡방향 외란을 함께 적용한 케이스의 RMS 오차는 동일 초기조건의 무노이즈 비교보다 컸습니다. 두 영향을 분리한 검증은 아니며, 모든 수치가 가상 모델 결과입니다. 실제 미니카나 실차 시험 결과가 아닙니다.
-
-## 07. Undergraduate Mini-Car Experience
-
-학부 미니카 사진·부품 목록·당시 자료는 아직 제공되지 않았습니다. 따라서 현재는 과거 제작 여부, 실제 센서/보드, 수행 기능 및 개인 역할을 구체적으로 단정하지 않습니다. 사진이나 기록이 확인되는 대로 캡션과 근거를 추가할 위치는 [`original/mini-car/`](original/mini-car/)에 마련했습니다.
-
-실제 원본 사진은 AI로 생성하거나 공개 블로그의 사진으로 대체하지 않습니다. 카메라 연동, 자동 조향, 폐루프 차선 유지, 주행 실험 및 성능은 확인 자료가 없는 한 수행 사실로 기재하지 않습니다. 이 프로젝트에서 신규 Raspberry Pi/Arduino 개발도 진행하지 않습니다.
-
-## 08. Engineering Analysis
-
-- 동적 모델은 `v_y`, yaw rate, tire cornering stiffness를 포함해 운동 응답을 표현하지만, 타이어 선형/소슬립 가정에 제한됩니다.
-- Lateral/heading PID 구조는 기록된 두 게인 세트를 조합한 새로운 참조 구현입니다. 원본의 블록 연결·단위가 확인되기 전까지 동일 제어기라고 단정하지 않습니다.
-- 큰 초기 오차 case에서 조향 제한에 4샘플 닿았습니다. 노이즈+외란 case는 2 cm 정착 기준을 만족하지 못했습니다.
-- 차선 변경 state/기준 경로는 새로 만든 시뮬레이션 예시로, 과거 Stateflow 재현이 아닙니다.
-- 실차/미니카에 적용하려면 실제 질량, wheelbase, tire, steering map, sensor delay/제어주기 등을 식별하고 별도 시험해야 합니다.
-
-가장 중요한 한계는 원본 모델 부재, 기록 게인의 단위 불명, 실제 센서·액추에이터 모델 부재, 하드웨어 시험 부재입니다. 세부 분석은 [설계 보고서](docs/design-report.md)에 기록했습니다.
-
-## 09. Reproducibility
-
-```text
-MATLAB: R2016a (9.0.0.341360)에서 검증
-필수 Toolbox: 없음 (base MATLAB 함수 및 table/writetable 사용)
-실행: run_lkas_suite
-검사: tests/test_lkas_reference.m
-```
-
-테스트는 시뮬레이션 유한성/조향 제한/상태 흐름을 검사하고, 저장 지표 CSV 및 두 CSV 사이의 baseline 시계열을 수치로 대조합니다. 그래프도 동일한 시뮬레이션 결과 객체에서 생성되며 저장 파일 존재를 검사합니다. MATLAB 버전이 다르면 figure renderer/이미지 모양은 달라질 수 있습니다.
-
-## 10. Technical Interview Notes
-
-실제 코드와 결과에 근거한 질문/답변은 [기술면접 문서](docs/technical-interview.md)를 참고하세요. `Dynamic`/`Kinematic` 모델 차이, 오차 정의, P/I/D와 anti-windup, 속도 변화, Stateflow 미사용, 가장 어려운 noisy case, 학부 경험과 현재 재구현의 경계를 포함합니다. 이력서용 요약과 1/3분 답변은 [포트폴리오 요약](docs/portfolio-summary.md)에 있습니다.
-
-## 파일 구성
-
-```text
-lkas-control-mini-car/
-├── README.md
-├── matlab/             # Dynamic Bicycle Model, PID 및 실행 함수
-├── tests/              # MATLAB 시나리오/CSV 결과 검사
-├── simulation/         # 입력 조건 및 지표 정의
-├── results/simulation/ # 실제 생성한 CSV와 그래프
-├── docs/               # 설계 보고서, 면접 및 포트폴리오 요약
-└── original/
-    ├── README.md       # 학부 LKA 원본 자료 현황
-    └── mini-car/       # 과거 미니카 사진/문서 추가 위치
-```
+- [Design Report](docs/design-report.md) — 수식, 모델 가정, 시험 지표/결과
+- [Simulation Scenarios](simulation/scenarios.md) — 각 시나리오 입력과 범위
+- [Requirements & Traceability](docs/requirements-and-traceability.md) — 요구사항과 검증 근거
+- [Technical Interview](docs/technical-interview.md) — 코드·결과 기반 예상 질문
+- [Portfolio Summary](docs/portfolio-summary.md) — 이력서용 요약 및 1/3분 답변

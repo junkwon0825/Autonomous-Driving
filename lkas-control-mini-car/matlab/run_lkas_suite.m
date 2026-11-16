@@ -78,7 +78,8 @@ timeSeries = table(allScenarioNames, allTime, allLateralError, ...
 timeSeriesPath = fullfile(outputDirectory, 'scenario_timeseries.csv');
 writetable(timeSeries, timeSeriesPath);
 
-figureHandle = figure('Visible', 'off');
+figureHandle = figure('Visible', 'off', 'Color', 'w', ...
+    'Position', [100, 100, 1100, 760]);
 plotScenarios(results, 'lateralError', 1, 'Lateral error (m)');
 plotScenarios(results, 'headingError', 2, 'Heading error (deg)', 180/pi);
 plotScenarios(results, 'steeringAngle', 3, 'Steering command (deg)', 180/pi);
@@ -102,21 +103,29 @@ hold on;
 lineHandles = zeros(numel(results), 1);
 for k = 1:numel(results)
     result = results{k};
-    lineHandles(k) = plot(result.time, result.(fieldName) * scale);
+    lineHandles(k) = plot(result.time, result.(fieldName) * scale, ...
+        'LineWidth', 1.3);
 end
 grid on;
+set(gca, 'FontSize', 10, 'LineWidth', 0.8);
 xlabel('Time (s)');
 ylabel(plotTitle);
-title(plotTitle);
+title([plotTitle, ' | MATLAB simulation'], 'FontSize', 11, ...
+    'FontWeight', 'bold');
 if position == 3
-    ylim([-35, 35]);
+    maximumSteering = results{1}.parameters.maxSteeringAngle * 180/pi;
+    plot([0, results{1}.time(end)], [maximumSteering, maximumSteering], ...
+        'k--', 'LineWidth', 1.0);
+    plot([0, results{1}.time(end)], [-maximumSteering, -maximumSteering], ...
+        'k--', 'LineWidth', 1.0);
+    ylim([-maximumSteering-5, maximumSteering+5]);
 end
 if position == 1
     names = cell(numel(results), 1);
     for k = 1:numel(results)
         names{k} = results{k}.name;
     end
-    legend(lineHandles, names, 'Interpreter', 'none', 'Location', 'best');
+    legend(lineHandles, names, 'Interpreter', 'none', 'Location', 'northeast');
 end
 hold off;
 end

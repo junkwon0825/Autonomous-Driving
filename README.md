@@ -46,11 +46,11 @@ Bicycle Model을 직접 구현하며 차량의 위치·heading 변화와 steerin
 
 ### 3. LKA Control Project
 
-기존 프로젝트 요약에는 MATLAB/Simulink·Stateflow 기반 LKA, Bicycle Model, Lateral/Yaw PID 경험이 기록되어 있습니다. 원본 모델·발표 파일은 현재 저장소에서 확인할 수 없으므로 역사 기록과 새로 실행한 결과를 구분합니다.
+MATLAB 기반 Dynamic Bicycle Model과 PID 조향 제어 시스템을 구현하고, 7개 주행 시나리오에서 차선 추종 성능을 분석한 프로젝트입니다.
 
-프로젝트 근거: [LKAS_PROJECT.md](LKAS_PROJECT.md)
+**기술 스택:** MATLAB R2016a · Dynamic Bicycle Model · Lateral/Heading PID · RK4 · Scenario Analysis
 
-현재 새로 구현한 Dynamic Bicycle Model, PID 제어기, 7개 MATLAB 시뮬레이션 시나리오 및 결과는 [LKAS Control Portfolio](lkas-control-mini-car/README.md)에 정리했습니다. 실제 Simulink/Stateflow 원본 복원 및 미니카 주행을 수행했다고 주장하지 않습니다. 학부 미니카 사진 증빙은 아직 제공되지 않았습니다.
+프로젝트: [Lane Keeping Assist System (LKAS)](lkas-control-mini-car/README.md) · [학부 LKAS 기록](LKAS_PROJECT.md)
 
 ## Learning Roadmap
 

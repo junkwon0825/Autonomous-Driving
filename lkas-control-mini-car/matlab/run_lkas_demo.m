@@ -30,19 +30,24 @@ else
         'This MATLAB installation does not provide writetable; CSV was not saved.');
 end
 
-figureHandle = figure('Visible', 'off');
+figureHandle = figure('Visible', 'off', 'Color', 'w', ...
+    'Position', [100, 100, 1000, 760]);
 subplot(3, 1, 1);
-plot(result.time, result.lateralError);
+plot(result.time, result.lateralError, 'LineWidth', 1.4);
 grid on;
+set(gca, 'FontSize', 10, 'LineWidth', 0.8);
 ylabel('e_y (m)');
-title('Reference LKAS simulation (candidate parameters)');
+title('MATLAB Simulation: Large Initial Offset', 'FontSize', 12, ...
+    'FontWeight', 'bold');
 subplot(3, 1, 2);
-plot(result.time, result.headingError * 180/pi);
+plot(result.time, result.headingError * 180/pi, 'LineWidth', 1.4);
 grid on;
+set(gca, 'FontSize', 10, 'LineWidth', 0.8);
 ylabel('e_\psi (deg)');
 subplot(3, 1, 3);
-plot(result.time, result.steeringAngle * 180/pi);
+plot(result.time, result.steeringAngle * 180/pi, 'LineWidth', 1.4);
 grid on;
+set(gca, 'FontSize', 10, 'LineWidth', 0.8);
 ylim([-35, 35]);
 ylabel('\delta (deg)');
 xlabel('Time (s)');
