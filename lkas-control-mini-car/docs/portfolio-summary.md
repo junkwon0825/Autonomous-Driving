@@ -17,7 +17,7 @@ MATLAB 기반 선형 Dynamic Bicycle Model과 Lateral/Heading PID 조향 제어�
 - Seven deterministic simulation scenarios
 - CSV metrics/time series, MATLAB plots, automated assertions
 
-현재 MATLAB 시뮬레이션 코드는 Simulink/Stateflow, 추가 Toolbox, OpenCV, Python 또는 Raspberry Pi/Arduino에 의존하지 않습니다. 학부 미니카 프로젝트는 README의 별도 섹션과 [원문 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)에 분리해 기록했습니다.
+MATLAB 시뮬레이션에는 추가 Toolbox가 필요하지 않습니다. 미니카 관련 사진과 기술 설명은 [README의 별도 섹션](../README.md#09-undergraduate-mini-car-project)에 정리했습니다.
 
 ## 수행 역할
 
