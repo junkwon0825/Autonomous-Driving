@@ -50,7 +50,7 @@ MATLAB 기반 Dynamic Bicycle Model과 PID 조향 제어 시스템을 구현하�
 
 **기술 스택:** MATLAB R2016a · Dynamic Bicycle Model · Lateral/Heading PID · RK4 · Scenario Analysis
 
-프로젝트: [Lane Keeping Assist System (LKAS)](lkas-control-mini-car/README.md) · [학부 LKAS 기록](LKAS_PROJECT.md) · [Raspberry Pi 5 미니카 프로젝트 원문](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)
+프로젝트: [Lane Keeping Assist System (LKAS)](lkas-control-mini-car/README.md) · [학부 LKAS 기록](LKAS_PROJECT.md)
 
 ## Learning Roadmap
 
