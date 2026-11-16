@@ -162,7 +162,7 @@ function value = lateral_overshoot(initialError, lateralError)
 if abs(initialError) < 1e-9
     value = NaN;
 else
-    value = max(0, -sign(initialError) * min(lateralError));
+    value = max(0, -min(sign(initialError) * lateralError));
 end
 end
 

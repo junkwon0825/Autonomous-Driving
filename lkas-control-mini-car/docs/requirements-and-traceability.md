@@ -9,7 +9,7 @@ This is a working student-project specification, not an ISO 26262 safety case or
 | REQ-03 | Run the reference controller/vehicle model without Simulink or add-on Toolbox dependencies. | `tests/test_lkas_reference.m` in MATLAB R2016a. | Seven scenario checks passed. |
 | REQ-04 | Constrain the reference front-wheel steering command to the configured saturation. | Automated output-bound assertion in each scenario. | Passed for all seven scenarios. |
 | REQ-05 | Keep measured results distinct from historical presentation results and hardware claims. | Separate reference CSV/PNG and evidence labels. | Implemented; simulation outputs archived, no hardware result. |
-| REQ-06 | Stop safely on perception failure, communication timeout, or emergency stop in the future mini car. | Hardware-in-loop and controlled-track safety tests. | Not implemented; hardware and interface are not selected. |
+| REQ-06 | Separate historical mini-car evidence from the new MATLAB simulation and mark missing evidence as unverified. | `original/mini-car/README.md` and portfolio README. | Evidence location prepared; photos/source materials not provided. |
 
 ## Current reference interface
 
@@ -25,4 +25,4 @@ The linear bicycle model assumes small slip angles, positive longitudinal speed 
 
 ## Verification records
 
-MATLAB R2016a scenario suite and automatic checks were executed on 2026-11-16. The resulting CSV/PNG files are in `results/simulation/`. No Simulink reproduction, mini-car measurement, or ISO verification result exists.
+MATLAB R2016a scenario suite and automatic checks were executed on 2026-11-16. Saved CSV values are checked against recomputed scenario metrics and baseline time-series values; generated graph files are checked for presence. The resulting CSV/PNG files are in `results/simulation/`. No Simulink reproduction, mini-car measurement, or ISO verification result exists.
