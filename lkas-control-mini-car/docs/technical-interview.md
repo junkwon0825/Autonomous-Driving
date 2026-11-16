@@ -1,6 +1,6 @@
 # LKAS 기술면접 대비
 
-답변은 현재 MATLAB 코드와 실행 CSV, 그리고 별도로 기록된 Raspberry Pi 5 미니카 프로젝트를 구분해 설명한다. 미니카 프로젝트의 근거는 [원문 블로그](https://velog.io/@firstclass9903/110-scale-raspberrypi5-%EA%B8%B0%EB%B0%98-%EC%9E%90%EC%9C%A8%EC%A3%BC%ED%96%89-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8)와 LKAS README의 사진이다.
+답변은 MATLAB 코드, 실행 결과와 미니카 관련 사진 자료를 구분해 설명한다. 수치와 제어 로직은 실제 실행 코드 및 CSV를 기준으로 한다.
 
 ## 1. Bicycle Model이란 무엇인가?
 
